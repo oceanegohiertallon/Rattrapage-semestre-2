@@ -1,5 +1,4 @@
-// Le statut est toujours porté par une icône + un texte, jamais par la
-// couleur seule (exigence F3 : accessibilité pour les daltoniens notamment).
+// icône + texte, jamais la couleur seule (daltonisme)
 const STATUS_CONFIG = {
   confirmed: {
     label: 'Confirmée',

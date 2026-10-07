@@ -50,11 +50,11 @@ describe('App - planning MATRiCE', () => {
 
     await screen.findByText('React composants')
 
-    // Nom accessible : le label "Groupe" doit identifier le select pour un lecteur d'écran.
+    // nom accessible via le label
     const groupSelect = screen.getByRole('combobox', { name: /^Groupe$/i })
     expect(groupSelect).toBeInTheDocument()
 
-    // Utilisation au clavier : tab jusqu'au select puis sélection par clavier.
+    // atteignable au clavier
     await user.tab()
     expect(groupSelect).toHaveFocus()
 

@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { loadSessions } from '../api/loadSessions'
 
-/**
- * Centralise l'état du planning : chargement des séances (par groupe),
- * filtres (domaine, recherche texte), gestion des réponses réseau dans
- * le désordre, et modification locale du statut d'une séance.
- */
+// Tout l'état du planning est ici : filtres, chargement, erreurs, statuts.
+// Permet de tester la logique sans avoir à monter l'UI.
 export function useSessions() {
   const [group, setGroup] = useState('')
   const [domain, setDomain] = useState('')
@@ -15,8 +12,7 @@ export function useSessions() {
   const [status, setStatus] = useState('idle') // idle | loading | success | error
   const [error, setError] = useState(null)
 
-  // Compteur de requêtes : on n'accepte que la réponse de la DERNIÈRE requête
-  // lancée, pour ignorer les réponses "en retard" (cas B arrivé après A).
+  // sert à ignorer les réponses "en retard" (ex: A répond après B)
   const requestIdRef = useRef(0)
 
   const fetchSessions = useCallback(async (currentGroup) => {
@@ -27,8 +23,7 @@ export function useSessions() {
     try {
       const data = await loadSessions({ group: currentGroup })
 
-      // Si une requête plus récente a été lancée entre-temps, on jette ce résultat.
-      if (requestId !== requestIdRef.current) return
+      if (requestId !== requestIdRef.current) return // plus la requête la plus récente, on jette
 
       setSessions(data)
       setStatus('success')
@@ -47,8 +42,7 @@ export function useSessions() {
     fetchSessions(group)
   }, [group, fetchSessions])
 
-  // Filtres domaine + recherche texte appliqués sur les séances déjà chargées
-  // (valeur calculée, pas besoin de re-déclencher une requête réseau).
+  // domaine/recherche : filtrés côté client, pas besoin de recharger
   const filteredSessions = useMemo(() => {
     return sessions.filter((session) => {
       const matchesDomain = !domain || session.domain === domain
@@ -60,8 +54,7 @@ export function useSessions() {
     })
   }, [sessions, domain, search])
 
-  // Modification locale du statut : une seule source de vérité (le tableau
-  // `sessions`), donc liste et détail restent automatiquement cohérents.
+  // une seule source de vérité -> liste et détail restent toujours synchro
   const updateSessionStatus = useCallback((sessionId, newStatus) => {
     setSessions((prev) =>
       prev.map((s) => (s.id === sessionId ? { ...s, status: newStatus } : s)),

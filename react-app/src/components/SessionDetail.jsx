@@ -7,9 +7,7 @@ export function SessionDetail({ session, onClose, onStatusChange }) {
   const closeButtonRef = useRef(null)
   const previouslyFocusedRef = useRef(null)
 
-  // À l'ouverture : mémorise l'élément qui avait le focus (la carte cliquée)
-  // et déplace le focus dans la modale. À la fermeture : rend le focus
-  // à cet élément, pour ne jamais perdre le fil au clavier.
+  // garde le focus précédent pour le rendre à la fermeture
   useEffect(() => {
     previouslyFocusedRef.current = document.activeElement
     closeButtonRef.current?.focus()
@@ -19,7 +17,7 @@ export function SessionDetail({ session, onClose, onStatusChange }) {
     }
   }, [])
 
-  // Fermeture au clavier avec Échap.
+  // Échap ferme la modale
   useEffect(() => {
     function handleKeyDown(e) {
       if (e.key === 'Escape') {

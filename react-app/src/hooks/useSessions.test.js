@@ -19,9 +19,7 @@ describe('useSessions - réponses réseau dans le désordre', () => {
 
   it('affiche toujours les données de la dernière requête lancée (B), même si sa réponse arrive avant celle d\'une requête plus ancienne (A) qui répond plus tard', async () => {
     vi.useFakeTimers()
-    // Scénario du sujet :
-    // A lancé à t=0 répond à 800ms ; B lancé à t=100ms répond à 200ms (donc à t=300ms).
-    // À t=800ms, l'écran doit toujours représenter B.
+    // scénario du sujet : A (t=0, répond à 800ms) vs B (t=100ms, répond à 200ms)
     loadSessions.mockImplementation(({ group }) => {
       const delay = group === 'A' ? 800 : group === 'B' ? 200 : 0
       return new Promise((resolve) => setTimeout(() => resolve(makeSession(group || 'init')), delay))
@@ -29,17 +27,17 @@ describe('useSessions - réponses réseau dans le désordre', () => {
 
     const { result } = renderHook(() => useSessions())
 
-    // Laisse la requête initiale (montage, group='') se résoudre.
+    // laisse le fetch initial (montage) se résoudre
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0)
     })
 
-    // t=0 : on sélectionne le groupe A.
+    // t=0 : groupe A
     act(() => {
       result.current.setGroup('A')
     })
 
-    // t=100 : on change pour le groupe B avant que A ait répondu.
+    // t=100 : on change pour B avant que A ait répondu
     await act(async () => {
       await vi.advanceTimersByTimeAsync(100)
     })
@@ -47,7 +45,7 @@ describe('useSessions - réponses réseau dans le désordre', () => {
       result.current.setGroup('B')
     })
 
-    // On avance jusqu'à t=800 (B a eu le temps de répondre à t=300, A pas encore à ce stade).
+    // t=800 : B a déjà répondu (t=300), A pas encore
     await act(async () => {
       await vi.advanceTimersByTimeAsync(700)
     })
@@ -55,8 +53,7 @@ describe('useSessions - réponses réseau dans le désordre', () => {
     expect(result.current.sessions).toEqual(makeSession('B'))
     expect(result.current.status).toBe('success')
 
-    // On avance encore pour laisser la réponse tardive de A arriver (t=800+) :
-    // elle doit être ignorée, l'écran doit toujours montrer B.
+    // la réponse tardive de A arrive maintenant -> doit être ignorée
     await act(async () => {
       await vi.advanceTimersByTimeAsync(200)
     })

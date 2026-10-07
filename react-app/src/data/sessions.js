@@ -77,11 +77,7 @@ export const SESSIONS = [
   },
 ]
 
-/**
- * Détermine si une séance est visible pour un groupe donné.
- * Règle du sujet : A affiche A + Promotion ; B affiche B + Promotion.
- * Pas de filtre groupe (undefined/'') => tout est visible.
- */
+// A et B affichent aussi la Promotion entière (règle du sujet)
 export function isVisibleForGroup(session, group) {
   if (!group) return true
   if (group === 'Promotion') return session.group === 'Promotion'
