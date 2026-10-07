@@ -4,7 +4,7 @@ import { SessionDetail } from './components/SessionDetail'
 import { SessionList } from './components/SessionList'
 import { useSessions } from './hooks/useSessions'
 
-function App() {
+function App({ loader }) {
   const {
     group,
     setGroup,
@@ -17,10 +17,17 @@ function App() {
     error,
     retry,
     updateSessionStatus,
-  } = useSessions()
+  } = useSessions(loader)
 
   const [openSessionId, setOpenSessionId] = useState(null)
+  // dérivé de la liste (pas de copie) : le détail suit toujours la même donnée que la carte
   const openSession = sessions.find((s) => s.id === openSessionId) ?? null
+
+  function resetFilters() {
+    setGroup('')
+    setDomain('')
+    setSearch('')
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -29,14 +36,14 @@ function App() {
           <h1 className="text-xl font-semibold text-gray-900">
             Planning <span className="text-violet-600">MATRiCE</span>
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-600 mt-1">
             Consultez les séances de la semaine, filtrez-les et ouvrez le détail d'une séance.
           </p>
         </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-6">
-        <div className="mb-6 rounded-lg bg-white border border-gray-200 p-4">
+        <div role="search" className="mb-6 rounded-lg bg-white border border-gray-200 p-4" aria-label="Filtres du planning">
           <FilterBar
             group={group}
             onGroupChange={setGroup}
@@ -53,6 +60,7 @@ function App() {
           error={error}
           onRetry={retry}
           onOpenDetail={setOpenSessionId}
+          onResetFilters={resetFilters}
         />
       </main>
 
