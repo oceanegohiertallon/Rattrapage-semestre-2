@@ -1,9 +1,9 @@
 import { SessionCard } from './SessionCard'
 
-export function SessionList({ sessions, status, error, onRetry, onOpenDetail }) {
+function Results({ sessions, status, error, onRetry, onOpenDetail, onResetFilters }) {
   if (status === 'loading') {
     return (
-      <div role="status" className="py-12 text-center text-gray-500">
+      <div className="py-12 text-center text-gray-600">
         <svg
           className="mx-auto size-6 animate-spin text-violet-600"
           viewBox="0 0 24 24"
@@ -24,13 +24,13 @@ export function SessionList({ sessions, status, error, onRetry, onOpenDetail }) 
 
   if (status === 'error') {
     return (
-      <div role="alert" className="py-12 text-center">
-        <p className="text-gray-900 font-medium">Une erreur est survenue</p>
-        <p className="mt-1 text-sm text-gray-600">{error}</p>
+      <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-8 text-center">
+        <p className="font-medium text-gray-900">Une erreur est survenue</p>
+        <p className="mt-1 text-sm text-gray-700">{error}</p>
         <button
           type="button"
           onClick={onRetry}
-          className="mt-4 rounded-md bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+          className="mt-4 rounded-md bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 focus-visible:ring-offset-2"
         >
           Réessayer
         </button>
@@ -38,19 +38,49 @@ export function SessionList({ sessions, status, error, onRetry, onOpenDetail }) 
     )
   }
 
-  if (status === 'success' && sessions.length === 0) {
+  if (sessions.length === 0) {
     return (
-      <div className="py-12 text-center text-gray-500">
+      <div className="rounded-lg border border-dashed border-gray-300 bg-white px-4 py-8 text-center text-gray-600">
         <p>Aucune séance ne correspond à ces filtres.</p>
+        <button
+          type="button"
+          onClick={onResetFilters}
+          className="mt-3 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 focus-visible:ring-offset-2"
+        >
+          Réinitialiser les filtres
+        </button>
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {sessions.map((session) => (
-        <SessionCard key={session.id} session={session} onOpenDetail={onOpenDetail} />
+        <li key={session.id}>
+          <SessionCard session={session} onOpenDetail={onOpenDetail} />
+        </li>
       ))}
-    </div>
+    </ul>
+  )
+}
+
+export function SessionList(props) {
+  const { sessions, status } = props
+  const count = sessions.length
+
+  return (
+    <section aria-labelledby="sessions-title">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="sessions-title" className="text-base font-semibold text-gray-900">
+          Séances de la semaine
+        </h2>
+        {/* annoncé aux lecteurs d'écran à chaque changement de filtre */}
+        <p role="status" className="text-sm text-gray-600">
+          {status === 'loading' && 'Chargement…'}
+          {status === 'success' && `${count} séance${count > 1 ? 's' : ''} affichée${count > 1 ? 's' : ''}`}
+        </p>
+      </div>
+      <Results {...props} />
+    </section>
   )
 }

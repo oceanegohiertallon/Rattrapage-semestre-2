@@ -1,3 +1,5 @@
+import { DOMAIN_LABELS } from '../data/sessions'
+
 const GROUPS = [
   { value: '', label: 'Tous les groupes' },
   { value: 'A', label: 'Groupe A' },
@@ -7,10 +9,7 @@ const GROUPS = [
 
 const DOMAINS = [
   { value: '', label: 'Tous les domaines' },
-  { value: 'web', label: 'Web' },
-  { value: 'data', label: 'Data' },
-  { value: 'cyber', label: 'Cybersécurité' },
-  { value: 'projet', label: 'Projet' },
+  ...Object.entries(DOMAIN_LABELS).map(([value, label]) => ({ value, label })),
 ]
 
 export function FilterBar({
@@ -31,7 +30,7 @@ export function FilterBar({
           id="filter-group"
           value={group}
           onChange={(e) => onGroupChange(e.target.value)}
-          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+          className="w-full rounded-md border border-gray-500 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-violet-600"
         >
           {GROUPS.map((g) => (
             <option key={g.value} value={g.value}>
@@ -49,7 +48,7 @@ export function FilterBar({
           id="filter-domain"
           value={domain}
           onChange={(e) => onDomainChange(e.target.value)}
-          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+          className="w-full rounded-md border border-gray-500 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-violet-600"
         >
           {DOMAINS.map((d) => (
             <option key={d.value} value={d.value}>
@@ -69,7 +68,7 @@ export function FilterBar({
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Titre, domaine..."
-          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+          className="w-full rounded-md border border-gray-500 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-violet-600"
         />
       </div>
     </div>

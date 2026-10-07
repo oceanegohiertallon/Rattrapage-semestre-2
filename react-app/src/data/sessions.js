@@ -83,3 +83,16 @@ export function isVisibleForGroup(session, group) {
   if (group === 'Promotion') return session.group === 'Promotion'
   return session.group === group || session.group === 'Promotion'
 }
+
+export const DOMAIN_LABELS = {
+  web: 'Web',
+  data: 'Data',
+  cyber: 'Cybersécurité',
+  projet: 'Projet',
+}
+
+export const GROUP_LABELS = {
+  A: 'Groupe A',
+  B: 'Groupe B',
+  Promotion: 'Promotion entière',
+}
