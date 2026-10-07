@@ -1,317 +1,1185 @@
-
-> react-app@0.0.0 test
-> vitest run
+# Commande : npx vitest run --reporter=verbose
+# Bugs volontaires actifs : garde anti-désordre commentée (useSessions.js) + règle Promotion retirée (sessions.js)
 
 
  RUN  v5.0.3 C:/Users/Ocean/Desktop/Oceane_GohierTallon_RattrapageSemestre2/react-app
 
- ❯ src/hooks/useSessions.test.js (3 tests | 1 failed) 184ms
-   ❯ useSessions - réponses réseau dans le désordre (3)
-     × affiche toujours les données de la dernière requête lancée (B), même si sa réponse arrive avant celle d'une requête plus ancienne (A) qui répond plus tard 30ms
- ❯ src/App.test.jsx (5 tests | 1 failed) 3840ms
-   ❯ App - planning MATRiCE (5)
-     × le filtre groupe A inclut aussi les séances de la Promotion entière 967ms
+ × src/hooks/useSessions.test.js > useSessions - réponses réseau dans le désordre > affiche toujours les données de la dernière requête lancée (B), même si sa réponse arrive avant celle d'une requête plus ancienne (A) qui répond plus tard 24ms
+   → expected [ { id: 's-A', …(5) } ] to deeply equal [ { id: 's-B', …(5) } ]
+ ✓ src/hooks/useSessions.test.js > useSessions - réponses réseau dans le désordre > passe par un état "loading" pendant le chargement 3ms
+ ✓ src/hooks/useSessions.test.js > useSessions - réponses réseau dans le désordre > passe en état "error" en cas d'échec, puis repasse en succès après une nouvelle tentative (retry) 129ms
+ ✓ src/App.test.jsx > App - planning MATRiCE > affiche les séances après le chargement (succès) 472ms
+ × src/App.test.jsx > App - planning MATRiCE > le filtre groupe A inclut aussi les séances de la Promotion entière 966ms
+   → Unable to find an element with the text: Données et SQL. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
 
-⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="min-h-screen bg-gray-50"
+    >
+      <header
+        class="bg-white border-b border-gray-200"
+      >
+        <div
+          class="max-w-5xl mx-auto px-4 py-5"
+        >
+          <h1
+            class="text-xl font-semibold text-gray-900"
+          >
+            Planning 
+            <span
+              class="text-violet-600"
+            >
+              MATRiCE
+            </span>
+          </h1>
+          <p
+            class="text-sm text-gray-600 mt-1"
+          >
+            Consultez les séances de la semaine, filtrez-les et ouvrez le détail d'une séance.
+          </p>
+        </div>
+      </header>
+      <main
+        class="max-w-5xl mx-auto px-4 py-6"
+      >
+        <div
+          aria-label="Filtres du planning"
+          class="mb-6 rounded-lg bg-white border border-gray-200 p-4"
+          role="search"
+        >
+          <div
+            class="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap"
+          >
+            <div
+              class="flex-1 min-w-[160px]"
+            >
+              <label
+                class="block text-sm font-medium text-gray-700 mb-1"
+                for="filter-group"
+              >
+                Groupe
+              </label>
+              <select
+                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-violet-600"
+                id="filter-group"
+              >
+                <option
+                  value=""
+                >
+                  Tous les groupes
+                </option>
+                <option
+                  value="A"
+                >
+                  Groupe A
+                </option>
+                <option
+                  value="B"
+                >
+                  Groupe B
+                </option>
+                <option
+                  value="Promotion"
+                >
+                  Promotion entière
+                </option>
+              </select>
+            </div>
+            <div
+              class="flex-1 min-w-[160px]"
+            >
+              <label
+                class="block text-sm font-medium text-gray-700 mb-1"
+                for="filter-domain"
+              >
+                Domaine
+              </label>
+              <select
+                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-violet-600"
+                id="filter-domain"
+              >
+                <option
+                  value=""
+                >
+                  Tous les domaines
+                </option>
+                <option
+                  value="web"
+                >
+                  Web
+                </option>
+                <option
+                  value="data"
+                >
+                  Data
+                </option>
+                <option
+                  value="cyber"
+                >
+                  Cybersécurité
+                </option>
+                <option
+                  value="projet"
+                >
+                  Projet
+                </option>
+              </select>
+            </div>
+            <div
+              class="flex-[2] min-w-[200px]"
+            >
+              <label
+                class="block text-sm font-medium text-gray-700 mb-1"
+                for="filter-search"
+              >
+                Rechercher une séance
+              </label>
+              <input
+                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-violet-600"
+                id="filter-search"
+                placeholder="Titre, domaine..."
+                type="search"
+                value=""
+              />
+            </div>
+          </div>
+        </div>
+        <section
+          aria-labelledby="sessions-title"
+        >
+          <div
+            class="mb-3 flex flex-wrap items-baseline justify-between gap-2"
+          >
+            <h2
+              class="text-base font-semibold text-gray-900"
+              id="sessions-title"
+            >
+              Séances de la semaine
+            </h2>
+            <p
+              class="text-sm text-gray-600"
+              role="status"
+            >
+              2 séances affichées
+            </p>
+          </div>
+          <ul
+            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            <li>
+              <article
+                class="relative h-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition hover:border-violet-300 hover:shadow-md has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-violet-600 has-[:focus-visible]:ring-offset-2"
+              >
+                <div
+                  class="flex flex-wrap items-start justify-between gap-2"
+                >
+                  <h3
+                    class="min-w-0 font-semibold text-gray-900"
+                  >
+                    <button
+                      class="text-left break-words after:absolute after:inset-0 after:rounded-lg focus:outline-none"
+                      type="button"
+                    >
+                      React composants
+                    </button>
+                  </h3>
+                  <span
+                    class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-violet-600 text-white"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="size-3.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        clip-rule="evenodd"
+                        d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                        fill-rule="evenodd"
+                      />
+                    </svg>
+                    Confirmée
+                  </span>
+                </div>
+                <div
+                  class="mt-2"
+                >
+                  <span
+                    class="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium bg-sky-50 text-sky-800 border-sky-200"
+                  >
+                    <span
+                      class="sr-only"
+                    >
+                      Domaine : 
+                    </span>
+                    Web
+                  </span>
+                </div>
+                <dl
+                  class="mt-3 space-y-1 text-sm text-gray-600"
+                >
+                  <div
+                    class="flex flex-wrap gap-x-1"
+                  >
+                    <dt
+                      class="font-medium text-gray-500"
+                    >
+                      Groupe :
+                    </dt>
+                    <dd>
+                      Groupe A
+                    </dd>
+                  </div>
+                  <div
+                    class="flex flex-wrap gap-x-1"
+                  >
+                    <dt
+                      class="font-medium text-gray-500"
+                    >
+                      Formateur :
+                    </dt>
+                    <dd>
+                      Camille Exemple
+                    </dd>
+                  </div>
+                </dl>
+              </article>
+            </li>
+            <li>
+              <article
+                class="relative h-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition hover:border-violet-300 hover:shadow-md has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-violet-600 has-[:focus-visible]:ring-offset-2"
+              >
+                <div
+                  class="flex flex-wrap items-start justify-between gap-2"
+                >
+                  <h3
+                    class="min-w-0 font-semibold text-gray-900"
+                  >
+                    <button
+                      class="text-left break-words after:absolute after:inset-0 after:rounded-lg focus:outline-none"
+                      type="button"
+                    >
+                      Authentification
+                    </button>
+                  </h3>
+                  <span
+                    class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="size-3.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        clip-rule="evenodd"
+                        d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .199.079.39.22.53l3.5 3.5a.75.75 0 1 0 1.06-1.06l-3.28-3.28V5Z"
+                        fill-rule="evenodd"
+                      />
+                    </svg>
+                    Proposée
+                  </span>
+                </div>
+                <div
+                  class="mt-2"
+                >
+                  <span
+                    class="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium bg-rose-50 text-rose-800 border-rose-200"
+                  >
+                    <span
+                      class="sr-only"
+                    >
+                      Domaine : 
+                    </span>
+                    Cybersécurité
+                  </span>
+                </div>
+                <dl
+                  class="mt-3 space-y-1 text-sm text-gray-600"
+                >
+                  <div
+                    class="flex flex-wrap gap-x-1"
+                  >
+                    <dt
+                      class="font-medium text-gray-500"
+                    >
+                      Groupe :
+                    </dt>
+                    <dd>
+                      Groupe A
+                    </dd>
+                  </div>
+                  <div
+                    class="flex flex-wrap gap-x-1"
+                  >
+                    <dt
+                      class="font-medium text-gray-500"
+                    >
+                      Formateur :
+                    </dt>
+                    <dd>
+                      Alex Démonstration
+                    </dd>
+                  </div>
+                </dl>
+              </article>
+            </li>
+          </ul>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+ × src/App.test.jsx > App - planning MATRiCE > combine les filtres groupe + domaine + recherche texte 115ms
+   → Unable to find an element with the text: Travail autonome. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="min-h-screen bg-gray-50"
+    >
+      <header
+        class="bg-white border-b border-gray-200"
+      >
+        <div
+          class="max-w-5xl mx-auto px-4 py-5"
+        >
+          <h1
+            class="text-xl font-semibold text-gray-900"
+          >
+            Planning 
+            <span
+              class="text-violet-600"
+            >
+              MATRiCE
+            </span>
+          </h1>
+          <p
+            class="text-sm text-gray-600 mt-1"
+          >
+            Consultez les séances de la semaine, filtrez-les et ouvrez le détail d'une séance.
+          </p>
+        </div>
+      </header>
+      <main
+        class="max-w-5xl mx-auto px-4 py-6"
+      >
+        <div
+          aria-label="Filtres du planning"
+          class="mb-6 rounded-lg bg-white border border-gray-200 p-4"
+          role="search"
+        >
+          <div
+            class="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap"
+          >
+            <div
+              class="flex-1 min-w-[160px]"
+            >
+              <label
+                class="block text-sm font-medium text-gray-700 mb-1"
+                for="filter-group"
+              >
+                Groupe
+              </label>
+              <select
+                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-violet-600"
+                id="filter-group"
+              >
+                <option
+                  value=""
+                >
+                  Tous les groupes
+                </option>
+                <option
+                  value="A"
+                >
+                  Groupe A
+                </option>
+                <option
+                  value="B"
+                >
+                  Groupe B
+                </option>
+                <option
+                  value="Promotion"
+                >
+                  Promotion entière
+                </option>
+              </select>
+            </div>
+            <div
+              class="flex-1 min-w-[160px]"
+            >
+              <label
+                class="block text-sm font-medium text-gray-700 mb-1"
+                for="filter-domain"
+              >
+                Domaine
+              </label>
+              <select
+                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-violet-600"
+                id="filter-domain"
+              >
+                <option
+                  value=""
+                >
+                  Tous les domaines
+                </option>
+                <option
+                  value="web"
+                >
+                  Web
+                </option>
+                <option
+                  value="data"
+                >
+                  Data
+                </option>
+                <option
+                  value="cyber"
+                >
+                  Cybersécurité
+                </option>
+                <option
+                  value="projet"
+                >
+                  Projet
+                </option>
+              </select>
+            </div>
+            <div
+              class="flex-[2] min-w-[200px]"
+            >
+              <label
+                class="block text-sm font-medium text-gray-700 mb-1"
+                for="filter-search"
+              >
+                Rechercher une séance
+              </label>
+              <input
+                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-violet-600"
+                id="filter-search"
+                placeholder="Titre, domaine..."
+                type="search"
+                value=""
+              />
+            </div>
+          </div>
+        </div>
+        <section
+          aria-labelledby="sessions-title"
+        >
+          <div
+            class="mb-3 flex flex-wrap items-baseline justify-between gap-2"
+          >
+            <h2
+              class="text-base font-semibold text-gray-900"
+              id="sessions-title"
+            >
+              Séances de la semaine
+            </h2>
+            <p
+              class="text-sm text-gray-600"
+              role="status"
+            >
+              1 séance affichée
+            </p>
+          </div>
+          <ul
+            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            <li>
+              <article
+                class="relative h-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition hover:border-violet-300 hover:shadow-md has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-violet-600 has-[:focus-visible]:ring-offset-2"
+              >
+                <div
+                  class="flex flex-wrap items-start justify-between gap-2"
+                >
+                  <h3
+                    class="min-w-0 font-semibold text-gray-900"
+                  >
+                    <button
+                      class="text-left break-words after:absolute after:inset-0 after:rounded-lg focus:outline-none"
+                      type="button"
+                    >
+                      Revue de projet
+                    </button>
+                  </h3>
+                  <span
+                    class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="size-3.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        clip-rule="evenodd"
+                        d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .199.079.39.22.53l3.5 3.5a.75.75 0 1 0 1.06-1.06l-3.28-3.28V5Z"
+                        fill-rule="evenodd"
+                      />
+                    </svg>
+                    Proposée
+                  </span>
+                </div>
+                <div
+                  class="mt-2"
+                >
+                  <span
+                    class="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium bg-amber-50 text-amber-800 border-amber-200"
+                  >
+                    <span
+                      class="sr-only"
+                    >
+                      Domaine : 
+                    </span>
+                    Projet
+                  </span>
+                </div>
+                <dl
+                  class="mt-3 space-y-1 text-sm text-gray-600"
+                >
+                  <div
+                    class="flex flex-wrap gap-x-1"
+                  >
+                    <dt
+                      class="font-medium text-gray-500"
+                    >
+                      Groupe :
+                    </dt>
+                    <dd>
+                      Groupe B
+                    </dd>
+                  </div>
+                  <div
+                    class="flex flex-wrap gap-x-1"
+                  >
+                    <dt
+                      class="font-medium text-gray-500"
+                    >
+                      Formateur :
+                    </dt>
+                    <dd>
+                      Sam Fictif
+                    </dd>
+                  </div>
+                </dl>
+              </article>
+            </li>
+          </ul>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+ ✓ src/App.test.jsx > App - planning MATRiCE > affiche un message quand aucune séance ne correspond aux filtres (résultat vide), puis permet de réinitialiser 411ms
+ ✓ src/App.test.jsx > App - planning MATRiCE > affiche une erreur avec un bouton "Réessayer" qui relance le chargement 68ms
+ ✓ src/App.test.jsx > App - planning MATRiCE > le filtre groupe a un nom accessible et peut être utilisé entièrement au clavier 888ms
+ ✓ src/App.test.jsx > App - planning MATRiCE > ouvre le détail au clavier, place le focus dans la modale et le rend à la carte à la fermeture 254ms
+ ✓ src/App.test.jsx > App - planning MATRiCE > ouvre le détail d'une séance et affiche les mêmes informations que la carte 86ms
+ ✓ src/App.test.jsx > App - planning MATRiCE > une modification de statut reste cohérente entre le détail et la liste, même après un rechargement 208ms
+ ✓ src/App.test.jsx > App - planning MATRiCE > une séance sans formateur (AUTO) ne peut pas être confirmée 64ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
 
  FAIL  src/App.test.jsx > App - planning MATRiCE > le filtre groupe A inclut aussi les séances de la Promotion entière
 TestingLibraryElementError: Unable to find an element with the text: Données et SQL. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
 
 Ignored nodes: comments, script, style
-[36m<body>[39m
-  [36m<div>[39m
-    [36m<div[39m
-      [33mclass[39m=[32m"min-h-screen bg-gray-50"[39m
-    [36m>[39m
-      [36m<header[39m
-        [33mclass[39m=[32m"bg-white border-b border-gray-200"[39m
-      [36m>[39m
-        [36m<div[39m
-          [33mclass[39m=[32m"max-w-5xl mx-auto px-4 py-5"[39m
-        [36m>[39m
-          [36m<h1[39m
-            [33mclass[39m=[32m"text-xl font-semibold text-gray-900"[39m
-          [36m>[39m
-            [0mPlanning [0m
-            [36m<span[39m
-              [33mclass[39m=[32m"text-violet-600"[39m
-            [36m>[39m
-              [0mMATRiCE[0m
-            [36m</span>[39m
-          [36m</h1>[39m
-          [36m<p[39m
-            [33mclass[39m=[32m"text-sm text-gray-500 mt-1"[39m
-          [36m>[39m
-            [0mConsultez les séances de la semaine, filtrez-les et ouvrez le détail d'une séance.[0m
-          [36m</p>[39m
-        [36m</div>[39m
-      [36m</header>[39m
-      [36m<main[39m
-        [33mclass[39m=[32m"max-w-5xl mx-auto px-4 py-6"[39m
-      [36m>[39m
-        [36m<div[39m
-          [33mclass[39m=[32m"mb-6 rounded-lg bg-white border border-gray-200 p-4"[39m
-        [36m>[39m
-          [36m<div[39m
-            [33mclass[39m=[32m"flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap"[39m
-          [36m>[39m
-            [36m<div[39m
-              [33mclass[39m=[32m"flex-1 min-w-[160px]"[39m
-            [36m>[39m
-              [36m<label[39m
-                [33mclass[39m=[32m"block text-sm font-medium text-gray-700 mb-1"[39m
-                [33mfor[39m=[32m"filter-group"[39m
-              [36m>[39m
-                [0mGroupe[0m
-              [36m</label>[39m
-              [36m<select[39m
-                [33mclass[39m=[32m"w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"[39m
-                [33mid[39m=[32m"filter-group"[39m
-              [36m>[39m
-                [36m<option[39m
-                  [33mvalue[39m=[32m""[39m
-                [36m>[39m
-                  [0mTous les groupes[0m
-                [36m</option>[39m
-                [36m<option[39m
-                  [33mvalue[39m=[32m"A"[39m
-                [36m>[39m
-                  [0mGroupe A[0m
-                [36m</option>[39m
-                [36m<option[39m
-                  [33mvalue[39m=[32m"B"[39m
-                [36m>[39m
-                  [0mGroupe B[0m
-                [36m</option>[39m
-                [36m<option[39m
-                  [33mvalue[39m=[32m"Promotion"[39m
-                [36m>[39m
-                  [0mPromotion entière[0m
-                [36m</option>[39m
-              [36m</select>[39m
-            [36m</div>[39m
-            [36m<div[39m
-              [33mclass[39m=[32m"flex-1 min-w-[160px]"[39m
-            [36m>[39m
-              [36m<label[39m
-                [33mclass[39m=[32m"block text-sm font-medium text-gray-700 mb-1"[39m
-                [33mfor[39m=[32m"filter-domain"[39m
-              [36m>[39m
-                [0mDomaine[0m
-              [36m</label>[39m
-              [36m<select[39m
-                [33mclass[39m=[32m"w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"[39m
-                [33mid[39m=[32m"filter-domain"[39m
-              [36m>[39m
-                [36m<option[39m
-                  [33mvalue[39m=[32m""[39m
-                [36m>[39m
-                  [0mTous les domaines[0m
-                [36m</option>[39m
-                [36m<option[39m
-                  [33mvalue[39m=[32m"web"[39m
-                [36m>[39m
-                  [0mWeb[0m
-                [36m</option>[39m
-                [36m<option[39m
-                  [33mvalue[39m=[32m"data"[39m
-                [36m>[39m
-                  [0mData[0m
-                [36m</option>[39m
-                [36m<option[39m
-                  [33mvalue[39m=[32m"cyber"[39m
-                [36m>[39m
-                  [0mCybersécurité[0m
-                [36m</option>[39m
-                [36m<option[39m
-                  [33mvalue[39m=[32m"projet"[39m
-                [36m>[39m
-                  [0mProjet[0m
-                [36m</option>[39m
-              [36m</select>[39m
-            [36m</div>[39m
-            [36m<div[39m
-              [33mclass[39m=[32m"flex-[2] min-w-[200px]"[39m
-            [36m>[39m
-              [36m<label[39m
-                [33mclass[39m=[32m"block text-sm font-medium text-gray-700 mb-1"[39m
-                [33mfor[39m=[32m"filter-search"[39m
-              [36m>[39m
-                [0mRechercher une séance[0m
-              [36m</label>[39m
-              [36m<input[39m
-                [33mclass[39m=[32m"w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"[39m
-                [33mid[39m=[32m"filter-search"[39m
-                [33mplaceholder[39m=[32m"Titre, domaine..."[39m
-                [33mtype[39m=[32m"search"[39m
-                [33mvalue[39m=[32m""[39m
-              [36m/>[39m
-            [36m</div>[39m
-          [36m</div>[39m
-        [36m</div>[39m
-        [36m<div[39m
-          [33mclass[39m=[32m"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"[39m
-        [36m>[39m
-          [36m<button[39m
-            [33mclass[39m=[32m"w-full text-left rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md hover:border-violet-300 transition focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"[39m
-            [33mtype[39m=[32m"button"[39m
-          [36m>[39m
-            [36m<div[39m
-              [33mclass[39m=[32m"flex items-start justify-between gap-2"[39m
-            [36m>[39m
-              [36m<h3[39m
-                [33mclass[39m=[32m"font-semibold text-gray-900"[39m
-              [36m>[39m
-                [0mReact composants[0m
-              [36m</h3>[39m
-              [36m<span[39m
-                [33mclass[39m=[32m"inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-violet-600 text-white"[39m
-              [36m>[39m
-                [36m<svg[39m
-                  [33maria-hidden[39m=[32m"true"[39m
-                  [33mclass[39m=[32m"size-3.5"[39m
-                  [33mfill[39m=[32m"currentColor"[39m
-                  [33mviewBox[39m=[32m"0 0 20 20"[39m
-                [36m>[39m
-                  [36m<path[39m
-                    [33mclip-rule[39m=[32m"evenodd"[39m
-                    [33md[39m=[32m"M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"[39m
-                    [33mfill-rule[39m=[32m"evenodd"[39m
-                  [36m/>[39m
-                [36m</svg>[39m
-                [0mConfirmée[0m
-              [36m</span>[39m
-            [36m</div>[39m
-            [36m<dl[39m
-              [33mclass[39m=[32m"mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-sm text-gray-600"[39m
-            [36m>[39m
-              [36m<div[39m
-                [33mclass[39m=[32m"flex gap-1"[39m
-              [36m>[39m
-                [36m<dt[39m
-                  [33mclass[39m=[32m"font-medium text-gray-500"[39m
-                [36m>[39m
-                  [0mDomaine :[0m
-                [36m</dt>[39m
-                [36m<dd>[39m
-                  [0mweb[0m
-                [36m</dd>[39m
-              [36m</div>[39m
-              [36m<div[39m
-                [33mclass[39m=[32m"flex gap-1"[39m
-              [36m>[39m
-                [36m<dt[39m
-                  [33mclass[39m=[32m"font-medium text-gray-500"[39m
-                [36m>[39m
-                  [0mGroupe :[0m
-                [36m</dt>[39m
-                [36m<dd>[39m
-                  [0mA[0m
-                [36m</dd>[39m
-              [36m</div>[39m
-              [36m<div[39m
-                [33mclass[39m=[32m"col-span-2 flex gap-1"[39m
-              [36m>[39m
-                [36m<dt[39m
-                  [33mclass[39m=[32m"font-medium text-gray-500"[39m
-                [36m>[39m
-                  [0mFormateur :[0m
-                [36m</dt>[39m
-                [36m<dd>[39m
-                  [0mCamille Exemple[0m
-                [36m</dd>[39m
-              [36m</div>[39m
-            [36m</dl>[39m
-          [36m</button>[39m
-          [36m<button[39m
-            [33mclass[39m=[32m"w-full text-left rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md hover:border-violet-300 transition focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"[39m
-            [33mtype[39m=[32m"button"[39m
-          [36m>[39m
-            [36m<div[39m
-              [33mclass[39m=[32m"flex items-start justify-between gap-2"[39m
-            [36m>[39m
-              [36m<h3[39m
-                [33mclass[39m=[32m"font-semibold text-gray-900"[39m
-              [36m>[39m
-                [0mAuthentification[0m
-              [36m</h3>[39m
-              [36m<span[39m
-                [33mclass[39m=[32m"inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300"[39m
-              [36m>[39m
-                [36m<svg[39m
-                  [33maria-hidden[39m=[32m"true"[39m
-                  [33mclass[39m=[32m"size-3.5"[39m
-                  [33mfill[39m=[32m"currentColor"[39m
-                  [33mviewBox[39m=[32m"0 0 20 20"[39m
-                [36m>[39m
-                  [36m<path[39m
-                    [33mclip-rule[39m=[32m"evenodd"[39m
-                    [33md[39m=[32m"M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .199.079.39.22.53l3.5 3.5a.75.75 0 1 0 1.06-1.06l-3.28-3.28V5Z"[39m
-                    [33mfill-rule[39m=[32m"evenodd"[39m
-                  [36m/>[39m
-                [36m</svg>[39m
-                [0mProposée[0m
-              [36m</span>[39m
-            [36m</div>[39m
-            [36m<dl[39m
-              [33mclass[39m=[32m"mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-sm text-gray-600"[39m
-            [36m>[39m
-              [36m<div[39m
-                [33mclass[39m=[32m"flex gap-1"[39m
-              [36m>[39m
-                [36m<dt[39m
-                  [33mclass[39m=[32m"font-medium text-gray-500"[39m
-                [36m>[39m
-                  [0mDomaine :[0m
-                [36m</dt>[39m
-                [36m<dd>[39m
-                  [0mcyber[0m
-                [36m</dd>[39m
-              [36m</div>[39m
-              [36m<div[39m
-                [33mclass[39m=[32m"flex gap-1"[39m
-              [36m>[39m
-                [36m<dt[39m
-                  [33mclass[39m=[32m"font-medium text-gray-500"[39m
-                [36m>[39m
-                  [0mGroupe :[0m
-                [36m</dt>[39m
-                [36m<dd>[39m
-                  [0mA[0m
-                [36m</dd>[39m
-              [36m</div>[39m
-              [36m<div[39m
-                [33mclass[39m=[32m"col-span-2 flex gap-1"[39m
-              [36m>[39m
-                [36m<dt[39m
-                  [33mclass[39m=[32m"font-medium text-gray-500"[39m
-                [36m>[39m
-                  [0mFormateur :[0m
-                [36m</dt>[39m
-                [36m<dd>[39m
-                  [0mAlex Démonstration[0m
-                [36m</dd>[39m
-              [36m</div>[39m
-            [36m</dl>[39m
-          [36m</button>[39m
-        [36m</div>[39m
-      [36m</main>[39m
-    [36m</div>[39m
-  [36m</div>[39m
-[36m</body>[39m
+<body>
+  <div>
+    <div
+      class="min-h-screen bg-gray-50"
+    >
+      <header
+        class="bg-white border-b border-gray-200"
+      >
+        <div
+          class="max-w-5xl mx-auto px-4 py-5"
+        >
+          <h1
+            class="text-xl font-semibold text-gray-900"
+          >
+            Planning 
+            <span
+              class="text-violet-600"
+            >
+              MATRiCE
+            </span>
+          </h1>
+          <p
+            class="text-sm text-gray-600 mt-1"
+          >
+            Consultez les séances de la semaine, filtrez-les et ouvrez le détail d'une séance.
+          </p>
+        </div>
+      </header>
+      <main
+        class="max-w-5xl mx-auto px-4 py-6"
+      >
+        <div
+          aria-label="Filtres du planning"
+          class="mb-6 rounded-lg bg-white border border-gray-200 p-4"
+          role="search"
+        >
+          <div
+            class="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap"
+          >
+            <div
+              class="flex-1 min-w-[160px]"
+            >
+              <label
+                class="block text-sm font-medium text-gray-700 mb-1"
+                for="filter-group"
+              >
+                Groupe
+              </label>
+              <select
+                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-violet-600"
+                id="filter-group"
+              >
+                <option
+                  value=""
+                >
+                  Tous les groupes
+                </option>
+                <option
+                  value="A"
+                >
+                  Groupe A
+                </option>
+                <option
+                  value="B"
+                >
+                  Groupe B
+                </option>
+                <option
+                  value="Promotion"
+                >
+                  Promotion entière
+                </option>
+              </select>
+            </div>
+            <div
+              class="flex-1 min-w-[160px]"
+            >
+              <label
+                class="block text-sm font-medium text-gray-700 mb-1"
+                for="filter-domain"
+              >
+                Domaine
+              </label>
+              <select
+                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-violet-600"
+                id="filter-domain"
+              >
+                <option
+                  value=""
+                >
+                  Tous les domaines
+                </option>
+                <option
+                  value="web"
+                >
+                  Web
+                </option>
+                <option
+                  value="data"
+                >
+                  Data
+                </option>
+                <option
+                  value="cyber"
+                >
+                  Cybersécurité
+                </option>
+                <option
+                  value="projet"
+                >
+                  Projet
+                </option>
+              </select>
+            </div>
+            <div
+              class="flex-[2] min-w-[200px]"
+            >
+              <label
+                class="block text-sm font-medium text-gray-700 mb-1"
+                for="filter-search"
+              >
+                Rechercher une séance
+              </label>
+              <input
+                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-violet-600"
+                id="filter-search"
+                placeholder="Titre, domaine..."
+                type="search"
+                value=""
+              />
+            </div>
+          </div>
+        </div>
+        <section
+          aria-labelledby="sessions-title"
+        >
+          <div
+            class="mb-3 flex flex-wrap items-baseline justify-between gap-2"
+          >
+            <h2
+              class="text-base font-semibold text-gray-900"
+              id="sessions-title"
+            >
+              Séances de la semaine
+            </h2>
+            <p
+              class="text-sm text-gray-600"
+              role="status"
+            >
+              2 séances affichées
+            </p>
+          </div>
+          <ul
+            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            <li>
+              <article
+                class="relative h-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition hover:border-violet-300 hover:shadow-md has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-violet-600 has-[:focus-visible]:ring-offset-2"
+              >
+                <div
+                  class="flex flex-wrap items-start justify-between gap-2"
+                >
+                  <h3
+                    class="min-w-0 font-semibold text-gray-900"
+                  >
+                    <button
+                      class="text-left break-words after:absolute after:inset-0 after:rounded-lg focus:outline-none"
+                      type="button"
+                    >
+                      React composants
+                    </button>
+                  </h3>
+                  <span
+                    class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-violet-600 text-white"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="size-3.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        clip-rule="evenodd"
+                        d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                        fill-rule="evenodd"
+                      />
+                    </svg>
+                    Confirmée
+                  </span>
+                </div>
+                <div
+                  class="mt-2"
+                >
+                  <span
+                    class="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium bg-sky-50 text-sky-800 border-sky-200"
+                  >
+                    <span
+                      class="sr-only"
+                    >
+                      Domaine : 
+                    </span>
+                    Web
+                  </span>
+                </div>
+                <dl
+                  class="mt-3 space-y-1 text-sm text-gray-600"
+                >
+                  <div
+                    class="flex flex-wrap gap-x-1"
+                  >
+                    <dt
+                      class="font-medium text-gray-500"
+                    >
+                      Groupe :
+                    </dt>
+                    <dd>
+                      Groupe A
+                    </dd>
+                  </div>
+                  <div
+                    class="flex flex-wrap gap-x-1"
+                  >
+                    <dt
+                      class="font-medium text-gray-500"
+                    >
+                      Formateur :
+                    </dt>
+                    <dd>
+                      Camille Exemple
+                    </dd>
+                  </div>
+                </dl>
+              </article>
+            </li>
+            <li>
+              <article
+                class="relative h-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition hover:border-violet-300 hover:shadow-md has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-violet-600 has-[:focus-visible]:ring-offset-2"
+              >
+                <div
+                  class="flex flex-wrap items-start justify-between gap-2"
+                >
+                  <h3
+                    class="min-w-0 font-semibold text-gray-900"
+                  >
+                    <button
+                      class="text-left break-words after:absolute after:inset-0 after:rounded-lg focus:outline-none"
+                      type="button"
+                    >
+                      Authentification
+                    </button>
+                  </h3>
+                  <span
+                    class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="size-3.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        clip-rule="evenodd"
+                        d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .199.079.39.22.53l3.5 3.5a.75.75 0 1 0 1.06-1.06l-3.28-3.28V5Z"
+                        fill-rule="evenodd"
+                      />
+                    </svg>
+                    Proposée
+                  </span>
+                </div>
+                <div
+                  class="mt-2"
+                >
+                  <span
+                    class="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium bg-rose-50 text-rose-800 border-rose-200"
+                  >
+                    <span
+                      class="sr-only"
+                    >
+                      Domaine : 
+                    </span>
+                    Cybersécurité
+                  </span>
+                </div>
+                <dl
+                  class="mt-3 space-y-1 text-sm text-gray-600"
+                >
+                  <div
+                    class="flex flex-wrap gap-x-1"
+                  >
+                    <dt
+                      class="font-medium text-gray-500"
+                    >
+                      Groupe :
+                    </dt>
+                    <dd>
+                      Groupe A
+                    </dd>
+                  </div>
+                  <div
+                    class="flex flex-wrap gap-x-1"
+                  >
+                    <dt
+                      class="font-medium text-gray-500"
+                    >
+                      Formateur :
+                    </dt>
+                    <dd>
+                      Alex Démonstration
+                    </dd>
+                  </div>
+                </dl>
+              </article>
+            </li>
+          </ul>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
  ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
  ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
  ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
  ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
- ❯ src/App.test.jsx:29:19
-     27|     // s01 (groupe A) et s03/s06 (Promotion) doivent être visibles
-     28|     expect(await screen.findByText('React composants')).toBeInTheDocum…
-     29|     expect(screen.getByText('Données et SQL')).toBeInTheDocument() // …
+ ❯ src/App.test.jsx:39:19
+     37|     // s01 (groupe A) et s03/s06 (Promotion) doivent être visibles
+     38|     expect(await screen.findByText('React composants')).toBeInTheDocum…
+     39|     expect(screen.getByText('Données et SQL')).toBeInTheDocument() // …
        |                   ^
-     30|     expect(screen.getByText('Travail autonome')).toBeInTheDocument() /…
-     31|
+     40|     expect(screen.getByText('Travail autonome')).toBeInTheDocument() /…
+     41|
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/App.test.jsx > App - planning MATRiCE > combine les filtres groupe + domaine + recherche texte
+TestingLibraryElementError: Unable to find an element with the text: Travail autonome. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="min-h-screen bg-gray-50"
+    >
+      <header
+        class="bg-white border-b border-gray-200"
+      >
+        <div
+          class="max-w-5xl mx-auto px-4 py-5"
+        >
+          <h1
+            class="text-xl font-semibold text-gray-900"
+          >
+            Planning 
+            <span
+              class="text-violet-600"
+            >
+              MATRiCE
+            </span>
+          </h1>
+          <p
+            class="text-sm text-gray-600 mt-1"
+          >
+            Consultez les séances de la semaine, filtrez-les et ouvrez le détail d'une séance.
+          </p>
+        </div>
+      </header>
+      <main
+        class="max-w-5xl mx-auto px-4 py-6"
+      >
+        <div
+          aria-label="Filtres du planning"
+          class="mb-6 rounded-lg bg-white border border-gray-200 p-4"
+          role="search"
+        >
+          <div
+            class="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap"
+          >
+            <div
+              class="flex-1 min-w-[160px]"
+            >
+              <label
+                class="block text-sm font-medium text-gray-700 mb-1"
+                for="filter-group"
+              >
+                Groupe
+              </label>
+              <select
+                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-violet-600"
+                id="filter-group"
+              >
+                <option
+                  value=""
+                >
+                  Tous les groupes
+                </option>
+                <option
+                  value="A"
+                >
+                  Groupe A
+                </option>
+                <option
+                  value="B"
+                >
+                  Groupe B
+                </option>
+                <option
+                  value="Promotion"
+                >
+                  Promotion entière
+                </option>
+              </select>
+            </div>
+            <div
+              class="flex-1 min-w-[160px]"
+            >
+              <label
+                class="block text-sm font-medium text-gray-700 mb-1"
+                for="filter-domain"
+              >
+                Domaine
+              </label>
+              <select
+                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-violet-600"
+                id="filter-domain"
+              >
+                <option
+                  value=""
+                >
+                  Tous les domaines
+                </option>
+                <option
+                  value="web"
+                >
+                  Web
+                </option>
+                <option
+                  value="data"
+                >
+                  Data
+                </option>
+                <option
+                  value="cyber"
+                >
+                  Cybersécurité
+                </option>
+                <option
+                  value="projet"
+                >
+                  Projet
+                </option>
+              </select>
+            </div>
+            <div
+              class="flex-[2] min-w-[200px]"
+            >
+              <label
+                class="block text-sm font-medium text-gray-700 mb-1"
+                for="filter-search"
+              >
+                Rechercher une séance
+              </label>
+              <input
+                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-violet-600"
+                id="filter-search"
+                placeholder="Titre, domaine..."
+                type="search"
+                value=""
+              />
+            </div>
+          </div>
+        </div>
+        <section
+          aria-labelledby="sessions-title"
+        >
+          <div
+            class="mb-3 flex flex-wrap items-baseline justify-between gap-2"
+          >
+            <h2
+              class="text-base font-semibold text-gray-900"
+              id="sessions-title"
+            >
+              Séances de la semaine
+            </h2>
+            <p
+              class="text-sm text-gray-600"
+              role="status"
+            >
+              1 séance affichée
+            </p>
+          </div>
+          <ul
+            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            <li>
+              <article
+                class="relative h-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition hover:border-violet-300 hover:shadow-md has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-violet-600 has-[:focus-visible]:ring-offset-2"
+              >
+                <div
+                  class="flex flex-wrap items-start justify-between gap-2"
+                >
+                  <h3
+                    class="min-w-0 font-semibold text-gray-900"
+                  >
+                    <button
+                      class="text-left break-words after:absolute after:inset-0 after:rounded-lg focus:outline-none"
+                      type="button"
+                    >
+                      Revue de projet
+                    </button>
+                  </h3>
+                  <span
+                    class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="size-3.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        clip-rule="evenodd"
+                        d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .199.079.39.22.53l3.5 3.5a.75.75 0 1 0 1.06-1.06l-3.28-3.28V5Z"
+                        fill-rule="evenodd"
+                      />
+                    </svg>
+                    Proposée
+                  </span>
+                </div>
+                <div
+                  class="mt-2"
+                >
+                  <span
+                    class="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium bg-amber-50 text-amber-800 border-amber-200"
+                  >
+                    <span
+                      class="sr-only"
+                    >
+                      Domaine : 
+                    </span>
+                    Projet
+                  </span>
+                </div>
+                <dl
+                  class="mt-3 space-y-1 text-sm text-gray-600"
+                >
+                  <div
+                    class="flex flex-wrap gap-x-1"
+                  >
+                    <dt
+                      class="font-medium text-gray-500"
+                    >
+                      Groupe :
+                    </dt>
+                    <dd>
+                      Groupe B
+                    </dd>
+                  </div>
+                  <div
+                    class="flex flex-wrap gap-x-1"
+                  >
+                    <dt
+                      class="font-medium text-gray-500"
+                    >
+                      Formateur :
+                    </dt>
+                    <dd>
+                      Sam Fictif
+                    </dd>
+                  </div>
+                </dl>
+              </article>
+            </li>
+          </ul>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/App.test.jsx:57:19
+     55|     await user.selectOptions(screen.getByLabelText(/^Domaine$/i), 'pro…
+     56|     expect(screen.getByText('Revue de projet')).toBeInTheDocument()
+     57|     expect(screen.getByText('Travail autonome')).toBeInTheDocument()
+       |                   ^
+     58|     expect(screen.queryByText('React événements')).not.toBeInTheDocume…
+     59|     // + recherche "revue" -> s05 seule
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
 
  FAIL  src/hooks/useSessions.test.js > useSessions - réponses réseau dans le désordre > affiche toujours les données de la dernière requête lancée (B), même si sa réponse arrive avant celle d'une requête plus ancienne (A) qui répond plus tard
 AssertionError: expected [ { id: 's-A', …(5) } ] to deeply equal [ { id: 's-B', …(5) } ]
@@ -333,19 +1201,19 @@ AssertionError: expected [ { id: 's-A', …(5) } ] to deeply equal [ { id: 's-B'
     },
   ]
 
- ❯ src/hooks/useSessions.test.js:55:37
-     53|     })
-     54|
-     55|     expect(result.current.sessions).toEqual(makeSession('B'))
+ ❯ src/hooks/useSessions.test.js:53:37
+     51|     })
+     52|
+     53|     expect(result.current.sessions).toEqual(makeSession('B'))
        |                                     ^
-     56|     expect(result.current.status).toBe('success')
-     57|
+     54|     expect(result.current.status).toBe('success')
+     55|
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
 
 
  Test Files  2 failed (2)
-      Tests  2 failed | 6 passed (8)
-   Start at  22:38:46
-   Duration  5.48s (tests 58%, environment 31%, setup 5%, import 3%, transform 2%, worker 1%)
+      Tests  3 failed | 10 passed (13)
+   Start at  22:36:39
+   Duration  5.05s (tests 58%, environment 32%, setup 5%, import 3%, transform 2%, worker 1%)
 

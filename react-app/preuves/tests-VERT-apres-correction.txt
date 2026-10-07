@@ -1,13 +1,25 @@
-
-> react-app@0.0.0 test
-> vitest run
+# Commande : npx vitest run --reporter=verbose
+# Après correction : les deux lignes restaurées
 
 
  RUN  v5.0.3 C:/Users/Ocean/Desktop/Oceane_GohierTallon_RattrapageSemestre2/react-app
 
+ ✓ src/hooks/useSessions.test.js > useSessions - réponses réseau dans le désordre > affiche toujours les données de la dernière requête lancée (B), même si sa réponse arrive avant celle d'une requête plus ancienne (A) qui répond plus tard 18ms
+ ✓ src/hooks/useSessions.test.js > useSessions - réponses réseau dans le désordre > passe par un état "loading" pendant le chargement 3ms
+ ✓ src/hooks/useSessions.test.js > useSessions - réponses réseau dans le désordre > passe en état "error" en cas d'échec, puis repasse en succès après une nouvelle tentative (retry) 125ms
+ ✓ src/App.test.jsx > App - planning MATRiCE > affiche les séances après le chargement (succès) 460ms
+ ✓ src/App.test.jsx > App - planning MATRiCE > le filtre groupe A inclut aussi les séances de la Promotion entière 954ms
+ ✓ src/App.test.jsx > App - planning MATRiCE > combine les filtres groupe + domaine + recherche texte 219ms
+ ✓ src/App.test.jsx > App - planning MATRiCE > affiche un message quand aucune séance ne correspond aux filtres (résultat vide), puis permet de réinitialiser 431ms
+ ✓ src/App.test.jsx > App - planning MATRiCE > affiche une erreur avec un bouton "Réessayer" qui relance le chargement 64ms
+ ✓ src/App.test.jsx > App - planning MATRiCE > le filtre groupe a un nom accessible et peut être utilisé entièrement au clavier 893ms
+ ✓ src/App.test.jsx > App - planning MATRiCE > ouvre le détail au clavier, place le focus dans la modale et le rend à la carte à la fermeture 262ms
+ ✓ src/App.test.jsx > App - planning MATRiCE > ouvre le détail d'une séance et affiche les mêmes informations que la carte 88ms
+ ✓ src/App.test.jsx > App - planning MATRiCE > une modification de statut reste cohérente entre le détail et la liste, même après un rechargement 219ms
+ ✓ src/App.test.jsx > App - planning MATRiCE > une séance sans formateur (AUTO) ne peut pas être confirmée 73ms
 
  Test Files  2 passed (2)
-      Tests  8 passed (8)
-   Start at  22:39:06
-   Duration  5.37s (tests 60%, environment 31%, setup 5%, import 2%, transform 2%, worker 1%)
+      Tests  13 passed (13)
+   Start at  22:36:45
+   Duration  5.19s (tests 59%, environment 31%, setup 5%, import 2%, transform 2%, worker 1%)
 
