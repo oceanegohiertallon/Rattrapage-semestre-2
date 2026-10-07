@@ -9,7 +9,9 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "contrast": "node scripts/contrast.mjs",
+    "captures": "node scripts/captures.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -26,6 +28,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "jsdom": "^29.1.1",
     "oxlint": "^1.81.0",
+    "puppeteer-core": "^24.43.1",
     "vite": "^8.3.0",
     "vitest": "^5.0.3"
   }

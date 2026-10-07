@@ -1,0 +1,12 @@
+# Trace navigateur réel (Chrome headless, puppeteer-core) — commande : npm run captures
+# sur le build de production servi par npm run preview — généré le 2026-10-07
+
+360px : débordement horizontal = 0px
+360px : focus à l'ouverture du détail = "Fermer le détail de la séance"
+360px : focus après Échap = "React composants"
+1280px : débordement horizontal = 0px
+1280px : focus à l'ouverture du détail = "Fermer le détail de la séance"
+1280px : focus après Échap = "React composants"
+désordre, t≈800ms : filtre=B cartes=["React événements","Données et SQL","Revue de projet","Travail autonome"]
+désordre, t≈1300ms (A a répondu) : cartes=["React événements","Données et SQL","Revue de projet","Travail autonome"]
+erreur : alerte affichée, puis "Réessayer" -> 6 séances affichées
