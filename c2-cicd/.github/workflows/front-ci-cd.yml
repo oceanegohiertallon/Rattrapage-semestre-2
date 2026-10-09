@@ -1,0 +1,252 @@
+# =============================================================================
+# MATRiCE — chaîne CI/CD du front React (C2)
+#
+# Ce fichier est volontairement rangé dans c2-cicd/.github/workflows/ : GitHub
+# n'exécute que les workflows placés à la RACINE du dépôt, il ne déclenche donc
+# aucun déploiement réel (hors périmètre du sujet). Pour l'activer, le copier
+# dans .github/workflows/ et créer les variables/environnements décrits plus bas.
+#
+# Principe : on construit UNE fois, on livre l'artefact construit.
+#   validate  -> npm ci + tests + build + artefact versionné (aucun droit d'écriture)
+#   deploy    -> contrôle de l'artefact, publication, smoke test, rollback auto
+#   rollback  -> même job deploy, alimenté par une version précédente (manuel)
+#
+# Remplace l'existant audité : compte admin partagé, git pull sur le serveur,
+# install non verrouillée, tests non bloquants, secrets dans le dépôt,
+# aucun artefact antérieur, sauvegardes jamais restaurées.
+# =============================================================================
+
+name: front-ci-cd
+
+on:
+  # Validation de toute proposition de changement, y compris depuis un fork.
+  # « pull_request » (et non « pull_request_target ») : le code d'un fork tourne
+  # avec un jeton en lecture seule et SANS accès aux secrets.
+  pull_request:
+    branches: [main]
+  # Branche principale : validation + livraison en préproduction.
+  push:
+    branches: [main]
+    # Tag de version (v1.4.0) : validation + livraison en production.
+    tags: ['v*.*.*']
+  # Retour arrière manuel vers une version déjà publiée.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version déjà publiée à redéployer (ex. v1.3.2)"
+        required: true
+        type: string
+      environment:
+        description: "Environnement cible"
+        required: true
+        type: choice
+        options: [staging, production]
+
+# Permissions minimales par défaut pour TOUS les jobs : lecture du code seulement.
+# Chaque job n'élargit que ce dont il a besoin.
+permissions:
+  contents: read
+
+# Deux exécutions sur la même PR : la plus ancienne est annulée (commit dépassé).
+# Sur main et les tags on n'annule jamais : cela pourrait couper une livraison.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  APP_DIR: react-app        # projet front (npm ci / npm test / npm run build -> dist/)
+  NODE_VERSION: '22.12.0'   # version figée, identique en local et en CI
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1. VALIDATION — tourne sur PR, push et tag. Ne livre rien, n'a aucun secret.
+  # ---------------------------------------------------------------------------
+  validate:
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ${{ env.APP_DIR }}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      # En production, épingler chaque action par SHA de commit complet
+      # (ex. actions/checkout@<sha> # v4) et laisser Dependabot les mettre à jour.
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false   # le jeton GitHub n'est pas laissé dans .git/config
+
+      - name: Installer Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ env.APP_DIR }}/package-lock.json
+
+      # Installation VERROUILLÉE : npm ci échoue si package-lock.json et
+      # package.json divergent, et n'installe que les versions du lock.
+      # --ignore-scripts : aucun script d'installation de dépendance n'est exécuté.
+      - name: Installation verrouillée
+        run: npm ci --ignore-scripts
+
+      # Dépendances avec vulnérabilité connue « high » ou plus : blocage.
+      - name: Audit des dépendances
+        run: npm audit --omit=dev --audit-level=high
+
+      # Tests BLOQUANTS : pas de continue-on-error. Un test rouge = job rouge
+      # = deploy jamais lancé (il dépend de ce job via « needs »).
+      - name: Tests (non interactifs)
+        run: npm test -- --run
+
+      - name: Build de production
+        run: npm run build
+
+      # Version de l'artefact : le tag si c'en est un, sinon main-<sha court>.
+      # Jamais « latest » : chaque artefact est identifiable et rejouable.
+      - name: Calculer la version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            VERSION="$GITHUB_REF_NAME"
+          else
+            VERSION="main-${GITHUB_SHA::7}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version : $VERSION"
+
+      # L'artefact embarque sa version et l'empreinte de chaque fichier :
+      # le job de livraison pourra vérifier qu'il livre exactement ce qui a été testé.
+      - name: Empaqueter l'artefact versionné
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          echo "$VERSION" > dist/VERSION
+          echo "$GITHUB_SHA" > dist/COMMIT
+          tar -czf "front-$VERSION.tar.gz" -C dist .
+          sha256sum "front-$VERSION.tar.gz" > "front-$VERSION.tar.gz.sha256"
+
+      - name: Publier l'artefact dans GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: front-${{ steps.version.outputs.version }}
+          path: |
+            ${{ env.APP_DIR }}/front-${{ steps.version.outputs.version }}.tar.gz
+            ${{ env.APP_DIR }}/front-${{ steps.version.outputs.version }}.tar.gz.sha256
+          retention-days: 30
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # 2. LIVRAISON — uniquement après validation verte, jamais sur une PR.
+  #    Utilisé aussi pour le rollback (même chemin = rollback testé à chaque livraison).
+  # ---------------------------------------------------------------------------
+  deploy:
+    needs: validate
+    # always() + test explicite : le job tourne en rollback manuel (validate sauté),
+    # mais JAMAIS si la validation a échoué ou a été annulée.
+    if: >-
+      always() &&
+      github.event_name != 'pull_request' &&
+      (needs.validate.result == 'success' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # L'environnement porte les règles de protection configurées dans GitHub :
+    # production = approbation manuelle d'une personne nommée + seuls les tags v*.
+    environment:
+      name: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref_type == 'tag' && 'production' || 'staging') }}
+      url: ${{ vars.SITE_URL }}
+    # Une seule livraison à la fois par environnement, jamais annulée en cours.
+    concurrency:
+      group: deploy-${{ github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref_type == 'tag' && 'production' || 'staging') }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write   # OIDC : identité AWS temporaire, AUCUNE clé d'accès stockée
+    env:
+      VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || needs.validate.outputs.version }}
+      RELEASES: s3://${{ vars.RELEASES_BUCKET }}/front   # archive de TOUTES les versions
+      SITE: s3://${{ vars.SITE_BUCKET }}                 # contenu servi par CloudFront
+    steps:
+      # Rôle IAM dédié à CE dépôt et CET environnement (condition sur le claim
+      # « sub » = repo:<owner>/<repo>:environment:<env>). Droits : écrire dans les
+      # deux buckets + invalider la distribution. Pas d'admin, pas de compte partagé.
+      - name: Identité AWS temporaire (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: eu-west-3
+
+      # Livraison normale : l'artefact vient du job validate et part dans l'archive.
+      - name: Récupérer l'artefact validé
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/download-artifact@v4
+        with:
+          name: front-${{ env.VERSION }}
+
+      - name: Archiver la version (immuable)
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          if aws s3 ls "$RELEASES/front-$VERSION.tar.gz" > /dev/null; then
+            echo "::error::$VERSION existe déjà dans l'archive : une version publiée ne se réécrit pas"
+            exit 1
+          fi
+          aws s3 cp "front-$VERSION.tar.gz" "$RELEASES/"
+          aws s3 cp "front-$VERSION.tar.gz.sha256" "$RELEASES/"
+
+      # Rollback : l'artefact vient de l'archive, rien n'est reconstruit.
+      - name: Récupérer une version archivée (rollback)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          aws s3 cp "$RELEASES/front-$VERSION.tar.gz" .
+          aws s3 cp "$RELEASES/front-$VERSION.tar.gz.sha256" .
+
+      # CONTRÔLE AVANT LIVRAISON : empreinte + version embarquée.
+      - name: Contrôler l'artefact
+        run: |
+          sha256sum --check "front-$VERSION.tar.gz.sha256"
+          mkdir site && tar -xzf "front-$VERSION.tar.gz" -C site
+          test -f site/index.html
+          test "$(cat site/VERSION)" = "$VERSION"
+
+      # Mémorise la version en ligne AVANT de la remplacer, pour le retour auto.
+      - name: Noter la version actuellement en ligne
+        id: previous
+        run: echo "version=$(curl -fsS "${{ vars.SITE_URL }}/VERSION" || echo none)" >> "$GITHUB_OUTPUT"
+
+      - name: Publier
+        run: |
+          # fichiers hachés par Vite : cache long ; index.html/VERSION : jamais en cache
+          aws s3 sync site/ "$SITE/" --delete --exclude index.html --exclude VERSION \
+            --cache-control "public,max-age=31536000,immutable"
+          aws s3 cp site/index.html "$SITE/index.html" --cache-control "no-cache"
+          aws s3 cp site/VERSION "$SITE/VERSION" --cache-control "no-cache"
+          aws cloudfront create-invalidation --distribution-id "${{ vars.CLOUDFRONT_ID }}" \
+            --paths /index.html /VERSION
+
+      # Vérification après livraison : le site répond ET sert la bonne version.
+      - name: Smoke test
+        id: smoke
+        run: |
+          for i in 1 2 3 4 5 6; do
+            if [ "$(curl -fsS "${{ vars.SITE_URL }}/VERSION")" = "$VERSION" ] \
+               && curl -fsS "${{ vars.SITE_URL }}/" | grep -q '<div id="root">'; then
+              echo "OK : $VERSION en ligne"; exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::smoke test en échec pour $VERSION"; exit 1
+
+      # Retour automatique à la version précédente si le smoke test échoue.
+      - name: Retour automatique à la version précédente
+        if: failure() && steps.smoke.conclusion == 'failure' && steps.previous.outputs.version != 'none'
+        env:
+          PREVIOUS: ${{ steps.previous.outputs.version }}
+        run: |
+          echo "::warning::retour à $PREVIOUS"
+          aws s3 cp "$RELEASES/front-$PREVIOUS.tar.gz" .
+          aws s3 cp "$RELEASES/front-$PREVIOUS.tar.gz.sha256" .
+          sha256sum --check "front-$PREVIOUS.tar.gz.sha256"
+          rm -rf previous && mkdir previous && tar -xzf "front-$PREVIOUS.tar.gz" -C previous
+          aws s3 sync previous/ "$SITE/" --delete
+          aws cloudfront create-invalidation --distribution-id "${{ vars.CLOUDFRONT_ID }}" --paths "/*"
