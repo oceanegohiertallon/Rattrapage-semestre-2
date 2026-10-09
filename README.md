@@ -2,6 +2,12 @@
 
 Sujet MATRiCE. Modules : **F1 · F2 · F3 · B1 · C1 · C2 · I3**. Chaque module a son dossier.
 
+**Dépôt :** https://github.com/oceanegohiertallon/Rattrapage-semestre-2
+
+```bash
+git clone https://github.com/oceanegohiertallon/Rattrapage-semestre-2.git
+```
+
 | Module | Dossier |
 |---|---|
 | F1 · F2 · F3 — application React | [`react-app/`](react-app/) |
