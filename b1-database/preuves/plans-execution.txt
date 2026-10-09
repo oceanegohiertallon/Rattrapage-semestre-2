@@ -1,0 +1,120 @@
+# Commande : ./scripts/init.sh --volume && psql -X -f sql/05-explain.sql   (10 006 séances, 30 007 acquis)
+# PostgreSQL 17.6 — généré le 2026-10-09
+
+SET
+SET
+=== 1. Planning d'une semaine (2024-03-04) ===
+                                               QUERY PLAN                                                
+---------------------------------------------------------------------------------------------------------
+ Sort (actual time=0.105..0.106 rows=30 loops=1)
+   Sort Key: s.date, s.periode, s.groupe
+   Sort Method: quicksort  Memory: 27kB
+   Buffers: shared hit=11
+   ->  Hash Left Join (actual time=0.054..0.066 rows=30 loops=1)
+         Hash Cond: (s.formateur_id = f.id)
+         Buffers: shared hit=5
+         ->  Index Scan using ix_seances_semaine on seances s (actual time=0.015..0.021 rows=30 loops=1)
+               Index Cond: (semaine_debut = '2024-03-04'::date)
+               Buffers: shared hit=4
+         ->  Hash (actual time=0.027..0.027 rows=50 loops=1)
+               Buckets: 1024  Batches: 1  Memory Usage: 11kB
+               Buffers: shared hit=1
+               ->  Seq Scan on formateurs f (actual time=0.013..0.016 rows=50 loops=1)
+                     Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=189
+(17 rows)
+
+=== 2. Formateurs d'une semaine ===
+                                               QUERY PLAN                                                
+---------------------------------------------------------------------------------------------------------
+ HashAggregate (actual time=0.041..0.045 rows=27 loops=1)
+   Group Key: f.id
+   Batches: 1  Memory Usage: 24kB
+   Buffers: shared hit=5
+   ->  Hash Join (actual time=0.022..0.032 rows=27 loops=1)
+         Hash Cond: (s.formateur_id = f.id)
+         Buffers: shared hit=5
+         ->  Index Scan using ix_seances_semaine on seances s (actual time=0.004..0.007 rows=30 loops=1)
+               Index Cond: (semaine_debut = '2024-03-04'::date)
+               Buffers: shared hit=4
+         ->  Hash (actual time=0.012..0.012 rows=50 loops=1)
+               Buckets: 1024  Batches: 1  Memory Usage: 11kB
+               Buffers: shared hit=1
+               ->  Seq Scan on formateurs f (actual time=0.005..0.006 rows=50 loops=1)
+                     Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=10
+(17 rows)
+
+=== 3. Confirmer une affectation (UPDATE par clé primaire + contrôle de l'index unique) ===
+BEGIN
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
+ Update on seances (actual time=5.484..5.485 rows=0 loops=1)
+   Buffers: shared hit=41
+   ->  Index Scan using seances_pkey on seances (actual time=0.014..0.016 rows=1 loops=1)
+         Index Cond: (id = 'v00003'::text)
+         Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=3
+ Trigger for constraint seances_formateur_id_fkey: time=0.176 calls=1
+(8 rows)
+
+ROLLBACK
+=== 4. Heures par formateur sur un trimestre ===
+                                                       QUERY PLAN                                                       
+------------------------------------------------------------------------------------------------------------------------
+ HashAggregate (actual time=1.534..1.548 rows=50 loops=1)
+   Group Key: f.id
+   Batches: 1  Memory Usage: 24kB
+   Buffers: shared hit=131
+   ->  Hash Right Join (actual time=1.197..1.479 rows=239 loops=1)
+         Hash Cond: (s.formateur_id = f.id)
+         Buffers: shared hit=131
+         ->  Seq Scan on seances s (actual time=1.180..1.417 rows=234 loops=1)
+               Filter: ((date >= '2024-01-01'::date) AND (date <= '2024-03-31'::date) AND (statut = 'confirmed'::text))
+               Rows Removed by Filter: 9772
+               Buffers: shared hit=130
+         ->  Hash (actual time=0.011..0.011 rows=50 loops=1)
+               Buckets: 1024  Batches: 1  Memory Usage: 11kB
+               Buffers: shared hit=1
+               ->  Seq Scan on formateurs f (actual time=0.004..0.006 rows=50 loops=1)
+                     Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=22
+(18 rows)
+
+=== 5. Acquis validés d'une semaine ===
+                                                 QUERY PLAN                                                 
+------------------------------------------------------------------------------------------------------------
+ Incremental Sort (actual time=0.143..0.150 rows=36 loops=1)
+   Sort Key: s.date, s.periode, s.id, a.libelle
+   Presorted Key: s.date, s.periode
+   Full-sort Groups: 2  Sort Method: quicksort  Average Memory: 27kB  Peak Memory: 27kB
+   Buffers: shared hit=65
+   ->  Nested Loop (actual time=0.078..0.131 rows=36 loops=1)
+         Buffers: shared hit=65
+         ->  Index Scan using ix_seances_semaine on seances s (actual time=0.004..0.009 rows=30 loops=1)
+               Index Cond: (semaine_debut = '2024-03-04'::date)
+               Buffers: shared hit=4
+         ->  Index Only Scan using ix_acquis_valides on acquis a (actual time=0.002..0.002 rows=1 loops=30)
+               Index Cond: (seance_id = s.id)
+               Heap Fetches: 0
+               Buffers: shared hit=61
+ Planning:
+   Buffers: shared hit=96
+(16 rows)
+
+=== 6. Créneaux d'un formateur (index unique réutilisé en lecture) ===
+                                                     QUERY PLAN                                                      
+---------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on seances (actual time=0.027..0.032 rows=8 loops=1)
+   Recheck Cond: ((formateur_id = 't7'::text) AND (date >= '2024-01-01'::date) AND (date <= '2024-03-31'::date))
+   Heap Blocks: exact=5
+   Buffers: shared hit=7
+   ->  Bitmap Index Scan on ux_seances_formateur_creneau (actual time=0.016..0.016 rows=8 loops=1)
+         Index Cond: ((formateur_id = 't7'::text) AND (date >= '2024-01-01'::date) AND (date <= '2024-03-31'::date))
+         Buffers: shared hit=2
+(7 rows)
+

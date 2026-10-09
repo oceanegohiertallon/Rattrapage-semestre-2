@@ -1,0 +1,30 @@
+# Commande : ./tests/test-concurrence.sh
+# PostgreSQL 17.6 — généré le 2026-10-09
+
+Préparation : séances c01, c02 (21/10 matin) et c11, c12, c13 (22/10 matin), sans formateur.
+
+=== Partie 1 — deux transactions qui se chevauchent ===
+[18:41:26.312] session 1 : BEGIN ; confirmer_affectation('c01','t1') ; attente 3 s ; COMMIT
+[18:41:26.425] session 1 : c01 -> t1 (confirmed), transaction ouverte
+[18:41:27.360] session 2 : BEGIN ; confirmer_affectation('c02','t1')  (même formateur, même créneau)
+[18:41:29.449] session 1 : COMMIT effectué
+[18:41:29.458] ERROR:  duplicate key value violates unique constraint "ux_seances_formateur_creneau"
+[18:41:29.479] DETAIL:  Key (formateur_id, date, periode)=(t1, 2026-10-21, am) already exists.
+[18:41:29.626] session 2 : terminée après 2036 ms, code psql 1
+État final : c01=t1/confirmed, c02=-/proposed
+RÉSULTAT : OK — la session 2 a attendu le COMMIT de la session 1 puis a été refusée (23505).
+
+=== Partie 2 — rafale : 3 sessions simultanées, t3 sur c11 / c12 / c13 (22/10 matin) ===
+  c11 : OK : c11 -> t3
+  c12 : refusé -> ERROR:  duplicate key value violates unique constraint "ux_seances_formateur_creneau"
+  c13 : refusé -> ERROR:  duplicate key value violates unique constraint "ux_seances_formateur_creneau"
+Séances de t3 le 22/10 matin en base : 1
+RÉSULTAT : OK — exactement 1 affectation sur 3 tentatives simultanées.
+
+=== Partie 3 — contre-exemple : « vérifier puis écrire » SANS index unique ===
+  n1 : affecté (aucun conflit vu à la lecture)
+  n2 : affecté (aucun conflit vu à la lecture)
+t1 affecté à 2 séances sur le même créneau -> la vérification applicative ne protège pas.
+
+TEST DE CONCURRENCE : RÉUSSI
+code de sortie : 0

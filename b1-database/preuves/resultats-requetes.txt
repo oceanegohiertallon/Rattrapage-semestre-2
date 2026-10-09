@@ -1,0 +1,58 @@
+# Commande : ./scripts/init.sh && psql -X -f sql/06-demo-operations.sql
+# PostgreSQL 17.6 — généré le 2026-10-09
+
+=== 1. Créer une séance : s07, mercredi 21/10 matin, groupe A, sans formateur ===
+ id  |    date    | periode | groupe | mode |    titre    |  statut  | semaine_debut 
+-----+------------+---------+--------+------+-------------+----------+---------------
+ s07 | 2026-10-21 | am      | A      | DG   | Tests front | proposed | 2026-10-19
+(1 row)
+
+=== 3. Confirmer une affectation : s04 avec t2, puis s07 avec t3 ===
+ id  | formateur_id |  statut   
+-----+--------------+-----------
+ s04 | t2           | confirmed
+(1 row)
+
+ id  | formateur_id |  statut   
+-----+--------------+-----------
+ s07 | t3           | confirmed
+(1 row)
+
+=== 2a. Lister la semaine du 19/10/2026 ===
+    date    | periode |  groupe   | id  |      titre       | domaine | mode |  statut   |     formateur      
+------------+---------+-----------+-----+------------------+---------+------+-----------+--------------------
+ 2026-10-19 | am      | A         | s01 | React composants | web     | DG   | confirmed | Camille Exemple
+ 2026-10-19 | am      | B         | s02 | React événements | web     | DG   | confirmed | Alex Démonstration
+ 2026-10-19 | pm      | Promotion | s03 | Données et SQL   | data    | CE   | confirmed | Camille Exemple
+ 2026-10-20 | am      | A         | s04 | Authentification | cyber   | DG   | confirmed | Alex Démonstration
+ 2026-10-20 | am      | B         | s05 | Revue de projet  | projet  | DG   | proposed  | Sam Fictif
+ 2026-10-20 | pm      | Promotion | s06 | Travail autonome | projet  | AUTO | proposed  | —
+ 2026-10-21 | am      | A         | s07 | Tests front      | web     | DG   | confirmed | Sam Fictif
+(7 rows)
+
+=== 2b. Formateurs de la semaine ===
+ id |        nom         | nb_seances | nb_confirmees 
+----+--------------------+------------+---------------
+ t1 | Camille Exemple    |          2 |             2
+ t2 | Alex Démonstration |          2 |             2
+ t3 | Sam Fictif         |          2 |             1
+(3 rows)
+
+=== 4. Heures par formateur (séances confirmées, semaine du 19/10) ===
+ id |        nom         | nb_seances | heures 
+----+--------------------+------------+--------
+ t1 | Camille Exemple    |          2 |    7.0
+ t2 | Alex Démonstration |          2 |    7.0
+ t3 | Sam Fictif         |          1 |    3.5
+(3 rows)
+
+=== 5. Acquis validés de la semaine ===
+ seance |      titre       |  groupe   |                acquis                 |       valide_le        
+--------+------------------+-----------+---------------------------------------+------------------------
+ s01    | React composants | A         | Découper une interface en composants  | 2026-10-19 12:00:00+02
+ s01    | React composants | A         | Passer des données par les props      | 2026-10-19 12:00:00+02
+ s02    | React événements | B         | Gérer un événement de formulaire      | 2026-10-19 12:15:00+02
+ s03    | Données et SQL   | Promotion | Écrire une jointure entre deux tables | 2026-10-19 17:00:00+02
+(4 rows)
+
+(transaction annulée : la base est revenue au jeu de données du sujet)

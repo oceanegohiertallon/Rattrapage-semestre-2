@@ -1,0 +1,29 @@
+# Commande : psql -X -v ON_ERROR_STOP=1 -f tests/test-entrees-invalides.sql
+# PostgreSQL 17.6 — généré le 2026-10-09
+
+OK  refusé   [23514] période « soir »  ->  new row for relation "seances" violates check constraint "seances_periode_check"
+OK  refusé   [23514] groupe « C »  ->  new row for relation "seances" violates check constraint "seances_groupe_check"
+OK  refusé   [23514] mode inconnu « VISIO »  ->  new row for relation "seances" violates check constraint "seances_mode_check"
+OK  refusé   [23514] statut « annulé »  ->  new row for relation "seances" violates check constraint "seances_statut_check"
+OK  refusé   [23514] titre vide  ->  new row for relation "seances" violates check constraint "seances_titre_check"
+OK  refusé   [23514] semaine qui ne commence pas un lundi  ->  new row for relation "semaines" violates check constraint "semaines_debut_check"
+OK  refusé   [23514] AUTO avec un formateur  ->  new row for relation "seances" violates check constraint "auto_sans_formateur_et_proposee"
+OK  refusé   [23514] AUTO confirmée  ->  new row for relation "seances" violates check constraint "auto_sans_formateur_et_proposee"
+OK  refusé   [23514] confirmée sans formateur  ->  new row for relation "seances" violates check constraint "confirmation_exige_formateur"
+OK  refusé   [23514] confirmer l'affectation d'une séance AUTO (s06)  ->  new row for relation "seances" violates check constraint "auto_sans_formateur_et_proposee"
+OK  refusé   [23514] acquis validé sans date de validation  ->  new row for relation "acquis" violates check constraint "date_de_validation_coherente"
+OK  refusé   [23503] formateur inconnu t9  ->  insert or update on table "seances" violates foreign key constraint "seances_formateur_id_fkey"
+OK  refusé   [23503] séance dans une semaine non déclarée (insertion directe)  ->  insert or update on table "seances" violates foreign key constraint "seances_semaine_debut_fkey"
+OK  refusé   [22008] date 2026-02-30  ->  date/time field value out of range: "2026-02-30"
+OK  refusé   [23505] identifiant déjà utilisé (s01)  ->  duplicate key value violates unique constraint "seances_pkey"
+OK  refusé   [23505] t1 déjà sur le créneau 19/10 matin (s01) : création  ->  duplicate key value violates unique constraint "ux_seances_formateur_creneau"
+OK  refusé   [23505] t2 déjà sur le créneau 20/10 matin (s04) : confirmation de s05  ->  duplicate key value violates unique constraint "ux_seances_formateur_creneau"
+OK  refusé   [P0002] confirmer une séance inexistante  ->  séance zz9 introuvable
+OK  accepté           créer une séance proposée sans formateur
+OK  accepté           créer une séance dans une nouvelle semaine (semaine créée)
+OK  accepté           t1 sur un autre créneau (20/10 après-midi), confirmé
+OK  accepté           confirmer s04 avec t2 (déjà proposé sur ce créneau)
+OK  accepté           séance AUTO sans formateur, proposée
+
+Tous les cas se sont comportés comme prévu.
+code de sortie : 0
