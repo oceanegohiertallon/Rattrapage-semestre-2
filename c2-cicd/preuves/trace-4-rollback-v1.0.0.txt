@@ -1,0 +1,21 @@
+Simulation front-ci-cd — mode=rollback version=v1.0.0
+Version en ligne au départ : v1.1.0
+
+=== deploy / Récupérer une version archivée (rollback) ===
+front-v1.0.0.tar.gz récupéré depuis l'archive (aucune reconstruction)
+
+=== deploy / Contrôler l'artefact ===
+front-v1.0.0.tar.gz: OK
+index.html présent
+VERSION embarquée = v1.0.0
+
+=== deploy / Noter la version actuellement en ligne ===
+précédente = v1.1.0
+
+=== deploy / Publier ===
+publié dans simulation/.cible/site
+
+=== deploy / Smoke test ===
+OK : v1.0.0 en ligne
+
+Version en ligne à la fin : v1.0.0

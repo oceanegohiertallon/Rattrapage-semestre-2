@@ -1,0 +1,27 @@
+Simulation front-ci-cd — mode=echec version=v1.2.0
+Version en ligne au départ : v1.1.0
+
+=== validate / Récupérer le code (git archive HEAD, comme un checkout propre) ===
+commit 1294ad2
+
+=== (simulation) Injection d'un test qui échoue ===
+
+=== validate / Installation verrouillée : npm ci --ignore-scripts ===
+
+added 200 packages in 6s
+OK (164 paquets, versions de package-lock.json)
+
+=== validate / Tests (non interactifs) : npm test -- --run ===
+   × régression simulée : A sans Promotion 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 13 passed (14)
+ FAIL  src/regression.test.js > régression simulée : A sans Promotion
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
+
+npm test -> code de sortie 1
+ÉCHEC des tests -> job validate ROUGE.
+Le job deploy (needs: validate) n'est PAS lancé : rien n'est livré.
+Version en ligne inchangée : v1.1.0

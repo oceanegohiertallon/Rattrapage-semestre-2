@@ -1,0 +1,42 @@
+Simulation front-ci-cd — mode=livrer version=v1.0.0
+Version en ligne au départ : none
+
+=== validate / Récupérer le code (git archive HEAD, comme un checkout propre) ===
+commit 1294ad2
+
+=== validate / Installation verrouillée : npm ci --ignore-scripts ===
+
+added 200 packages in 5s
+OK (164 paquets, versions de package-lock.json)
+
+=== validate / Tests (non interactifs) : npm test -- --run ===
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+
+=== validate / Build de production : npm run build ===
+dist/assets/index-DxtHtsB5.css   19.32 kB │ gzip:  4.70 kB
+dist/assets/index-Bp1ZJjLz.js   235.04 kB │ gzip: 72.93 kB
+
+✓ built in 358ms
+
+=== validate / Empaqueter l'artefact versionné ===
+39cc32144d22a3f2edf736cecbcfb9438de643a143db9113af91d6ac43dfb765 *front-v1.0.0.tar.gz
+
+=== deploy / Archiver la version (immuable) ===
+archive : front-v1.0.0.tar.gz 
+
+=== deploy / Contrôler l'artefact ===
+front-v1.0.0.tar.gz: OK
+index.html présent
+VERSION embarquée = v1.0.0
+
+=== deploy / Noter la version actuellement en ligne ===
+précédente = none
+
+=== deploy / Publier ===
+publié dans simulation/.cible/site
+
+=== deploy / Smoke test ===
+OK : v1.0.0 en ligne
+
+Version en ligne à la fin : v1.0.0

@@ -1,0 +1,3 @@
+# Vérification statique du workflow — actionlint 1.7.12, 2026-10-09
+$ actionlint -shellcheck= .github/workflows/front-ci-cd.yml
+code de sortie : 0 (0 = aucune erreur)
