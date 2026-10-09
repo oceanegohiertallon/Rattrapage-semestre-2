@@ -1,0 +1,3 @@
+# Commande : node pipeline.js data/seances.ndjson preuves/sortie-jeu-du-sujet   (Node v22.15.0, 2026-10-09)
+data/seances.ndjson -> preuves/sortie-jeu-du-sujet/
+{"lus":12,"acceptes":6,"rejets":4,"doublons":2}

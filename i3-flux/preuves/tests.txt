@@ -1,0 +1,47 @@
+# Commande : node --test --test-reporter=spec   (Node v22.15.0, 2026-10-09)
+
+▶ ligne valide
+  ✔ normalise date, période et statut (16.3565ms)
+  ✔ accepte toutes les variantes de période et de statut prévues (0.4021ms)
+  ✔ valide les dates réelles, années bissextiles comprises (0.5212ms)
+✔ ligne valide (18.1879ms)
+▶ lignes invalides
+  ✔ rejette : date inexistante (10.0276ms)
+  ✔ rejette : date au mauvais format (4.4472ms)
+  ✔ rejette : période inconnue (3.9968ms)
+  ✔ rejette : groupe inconnu (4.4751ms)
+  ✔ rejette : mode inconnu (6.0038ms)
+  ✔ rejette : formateur inconnu (3.5802ms)
+  ✔ rejette : statut inconnu (6.1615ms)
+  ✔ rejette : titre vide (6.7401ms)
+  ✔ rejette : id manquant (4.9011ms)
+  ✔ rejette : AUTO avec formateur (3.4139ms)
+  ✔ rejette : AUTO confirmée (6.0835ms)
+  ✔ rejette : confirmée sans formateur (4.7269ms)
+  ✔ rejette une ligne JSON valide qui n'est pas un objet (4.2714ms)
+  ✔ une ligne invalide n'interrompt pas les suivantes (4.1639ms)
+✔ lignes invalides (74.2394ms)
+▶ doublons
+  ✔ garde la première occurrence valide, compte les suivantes comme doublons (5.745ms)
+  ✔ valide AVANT de dédupliquer : une première occurrence invalide ne bloque pas l'id (6.2825ms)
+✔ doublons (12.2883ms)
+▶ JSON malformé
+  ✔ rejette la ligne avec son contenu brut et continue (4.6329ms)
+✔ JSON malformé (4.7785ms)
+▶ fichier vide et lignes vides
+  ✔ fichier vide : tout à zéro, sorties vides mais présentes (4.4015ms)
+  ✔ une ligne vide au milieu est lue et rejetée (invariant respecté) (6.1977ms)
+  ✔ fins de ligne Windows (CRLF) et BOM UTF-8 acceptés (3.6964ms)
+✔ fichier vide et lignes vides (14.6795ms)
+▶ jeu de données du sujet (data/seances.ndjson)
+  ✔ lus = acceptés + rejets + doublons, avec les bonnes lignes (5.7656ms)
+  ✔ même fichier = même résultat, octet pour octet, quel que soit le fuseau horaire (261.3649ms)
+✔ jeu de données du sujet (data/seances.ndjson) (267.2983ms)
+ℹ tests 25
+ℹ suites 6
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 535.4693
