@@ -10,7 +10,7 @@ Sujet MATRiCE. Modules : **F1 · F2 · F3 · B1 · C1 · C2 · I3**. Chaque modu
 | C2 — CI/CD | [`c2-cicd/`](c2-cicd/) |
 | I3 — flux de données | [`i3-flux/`](i3-flux/) |
 
-Mes choix : [`JUSTIFICATIONS.md`](JUSTIFICATIONS.md) · usage de l'IA : [`SOURCES_IA.md`](SOURCES_IA.md).
+Mes choix : [`JUSTIFICATIONS.md`](JUSTIFICATIONS.md) · sources : [`SOURCES_IA.md`](SOURCES_IA.md).
 
 ## Prérequis
 
