@@ -1,22 +1,20 @@
 # C1 — AWS
 
-Module indépendant, document uniquement : aucun compte ni déploiement AWS réel.
+Un document qui propose une architecture AWS pour MATRiCE. Aucun compte ni déploiement réel n'est utilisé.
 
-| Livrable | Fichier |
+| Fichier | Contenu |
 |---|---|
-| Dossier (3 à 5 pages) : 2 architectures, EC2/S3/Lambda, schéma, IAM, secrets, sauvegardes, logs, alertes, retour arrière, protocoles, RPO/RTO | [`dossier-aws.md`](dossier-aws.md) |
-| Estimation détaillée par poste, avec sources datées | [`estimation/resultat-estimation.md`](estimation/resultat-estimation.md) |
-| Script de calcul (tarifs officiels AWS Price List API) | [`estimation/estimer-couts.mjs`](estimation/estimer-couts.mjs) |
+| [`dossier-aws.md`](dossier-aws.md) | le dossier : architectures comparées, schéma, sécurité, sauvegardes, coûts, incidents |
+| [`estimation/resultat-estimation.md`](estimation/resultat-estimation.md) | le détail des coûts, ligne par ligne |
+| `estimation/estimer-couts.mjs` | le script qui calcule les coûts à partir des tarifs officiels AWS |
 
-## Refaire l'estimation
+## Refaire le calcul des coûts
 
-Prérequis : Node 18+ (utilise `fetch`). Pas de compte AWS : l'API de tarification est publique.
+Il faut Node 18 ou plus. Aucun compte AWS : les tarifs sont publics.
 
 ```bash
 cd c1-aws/estimation
 node --max-old-space-size=4096 estimer-couts.mjs > resultat-estimation.md
 ```
 
-La première exécution télécharge environ 270 Mo de fichiers d'offres (dont environ 250 Mo pour EC2) dans
-`estimation/.cache/`, qui n'est pas versionné. Les volumes supposés sont en tête du script (`VOLUMES`).
-Les tarifs AWS évoluent : la sortie indique la date de publication de chaque fichier utilisé.
+La première fois, le script télécharge environ 270 Mo de fichiers de tarifs. Les prix changent avec le temps ; la date de chaque tarif est indiquée dans le résultat.

@@ -1,89 +1,63 @@
 # I3 — Structuration de flux
 
-Module indépendant : pipeline en ligne de commande qui traite un flux NDJSON de séances.
-Les étapes s'enchaînent dans cet ordre : lecture, validation, normalisation, déduplication, sortie.
+Un programme en ligne de commande qui lit un fichier de séances (une séance JSON par ligne). Il vérifie chaque ligne, la remet au bon format et retire les doublons.
 
 ## Prérequis
 
-Node.js 20+. **Aucune dépendance** : pas besoin de `npm install`.
+Node.js 20 ou plus. Rien à installer.
 
 ## Lancement
 
 ```bash
 cd i3-flux
-node pipeline.js data/seances.ndjson sortie      # le dossier de sortie est facultatif (défaut : sortie/)
-# ou : npm start
+node pipeline.js data/seances.ndjson sortie
 ```
 
-Sortie console : `{"lus":12,"acceptes":6,"rejets":4,"doublons":2}`.
+Le programme crée 3 fichiers dans `sortie/` :
+- `acceptes.ndjson` : les séances valides, avec leur numéro de ligne d'origine (`source_line`) ;
+- `rejets.ndjson` : les lignes refusées, avec leur numéro et la raison (`motif`) ;
+- `stats.json` : le nombre de lignes lues, acceptées, rejetées et en doublon.
 
-Fichiers produits :
-
-| Fichier | Contenu |
-|---|---|
-| `acceptes.ndjson` | une séance normalisée par ligne, avec `source_line` (numéro de ligne d'origine) |
-| `rejets.ndjson` | `source_line`, `motif` du rejet et `contenu` brut de la ligne |
-| `stats.json` | `lus`, `acceptes`, `rejets`, `doublons` ; invariant `lus = acceptes + rejets + doublons` vérifié à chaque exécution |
+Il vérifie toujours que **lues = acceptées + rejetées + doublons**.
 
 ## Tests
 
 ```bash
-npm test          # = node --test : 25 tests
+npm test      # 25 tests
 ```
 
-| Catégorie | Ce qui est vérifié |
-|---|---|
-| Valide | normalisation de la date (`DD/MM/YYYY` vers `YYYY-MM-DD`), de la période (`matin`/`am` → `am`, `après-midi`/`apres-midi`/`pm` → `pm`) et du statut (`propose` → `proposed`, `confirme` → `confirmed`) ; années bissextiles |
-| Invalide | 12 règles : date inexistante ou au mauvais format, période, groupe, mode, formateur, statut, titre vide, id manquant, AUTO avec formateur, AUTO confirmée, confirmée sans formateur ; ligne JSON qui n'est pas un objet ; une ligne fautive n'interrompt pas les suivantes |
-| Doublon | première occurrence valide retenue ; **validation avant déduplication** (une première occurrence invalide ne bloque pas l'id) |
-| JSON malformé | rejet avec le contenu brut, la lecture continue |
-| Vide | fichier vide (tout à 0, sorties présentes) ; ligne vide au milieu (lue, rejetée) ; CRLF et BOM acceptés |
-| Jeu du sujet | 12 lus = 6 + 4 + 2, bonnes lignes acceptées (1, 2, 3, 5, 6, 11) et rejetées (7, 8, 9, 12) |
-| Déterminisme | sorties identiques octet pour octet sous trois fuseaux horaires (UTC, Pacific/Kiritimati, America/Los_Angeles) |
+Ils couvrent : ligne valide, lignes invalides (12 règles), doublons, JSON malformé, fichier vide. Ils vérifient aussi que le résultat est le même sur n'importe quel fuseau horaire.
 
-## Données
+## Résultat sur le fichier du sujet
 
-`data/seances.ndjson` reconstitue les deux tableaux du sujet : un objet JSON par ligne, dans l'ordre de 1 à 11. La ligne 12 y est ajoutée telle quelle : `{"id":"bad4","title":"JSON tronqué"`.
+12 lignes lues : **6 acceptées, 4 rejetées, 2 doublons**.
 
-Résultat attendu et obtenu :
-
-| Lignes | Issue | Raison |
+| Lignes | Résultat | Pourquoi |
 |---|---|---|
-| 1, 2, 3, 5, 6, 11 | acceptées | normalisées (dates `DD/MM/YYYY`, `matin`, `après-midi`, `confirme`, `propose`) |
-| 4, 10 | doublons | s01 et s02 déjà acceptées (lignes 1 et 2) |
-| 7 | rejet | titre vide |
-| 8 | rejet | date inexistante (30 février) |
-| 9 | rejet | période « soir » |
-| 12 | rejet | JSON malformé |
+| 1, 2, 3, 5, 6, 11 | acceptées | remises au bon format (dates, « matin », « après-midi », statuts) |
+| 4 et 10 | doublons | s01 et s02 existent déjà |
+| 7 | rejetée | titre vide |
+| 8 | rejetée | le 30 février n'existe pas |
+| 9 | rejetée | « soir » n'est pas une période valide |
+| 12 | rejetée | JSON coupé |
 
-## Usage mémoire
+## Usage de la mémoire
 
-Le fichier est lu **en flux, ligne par ligne** (`readline`) : il n'est jamais chargé en entier.
+Le fichier est lu **ligne par ligne**, il n'est jamais chargé en entier. Le programme garde seulement en mémoire la ligne en cours, les compteurs et la liste des identifiants déjà acceptés, qui sert à repérer les doublons.
 
-Restent en mémoire :
-- la ligne courante ;
-- les quatre compteurs ;
-- l'ensemble des **id déjà acceptés**, indispensable pour détecter les doublons.
+La mémoire dépend donc du nombre d'identifiants différents (environ 100 Mo pour un million), pas de la taille du fichier.
 
-La mémoire croît donc avec le nombre d'id distincts acceptés (quelques dizaines d'octets par id, environ 100 Mo pour un million), et **pas** avec la taille du fichier. Les sorties sont écrites au fil de l'eau, en respectant la contre-pression des flux d'écriture (`drain`).
+## Choix
 
-Au-delà de plusieurs dizaines de millions d'id distincts, l'ensemble ne tiendrait plus en mémoire. Il faudrait alors dédupliquer par tri externe, ou avec un index sur disque (SQLite par exemple).
+- On vérifie la ligne **avant** de chercher les doublons : si la première version d'un id est invalide, la suivante peut être acceptée.
+- Une ligne vide au milieu du fichier est comptée et rejetée.
+- Les dates sont vérifiées par calcul, pas avec l'horloge de la machine : le fuseau horaire ne change rien.
 
-## Choix d'interprétation
+## Fichiers
 
-- Une **ligne vide** au milieu du fichier est comptée comme lue, puis rejetée (motif « ligne vide »), pour respecter l'invariant. Le saut de ligne final du fichier ne compte pas comme une ligne.
-- **Aucune dépendance au fuseau horaire.** Les dates sont validées par calcul (mois, années bissextiles), jamais par `new Date(texte)`. Rien n'est horodaté dans les sorties, et l'ordre des clés est fixe.
-- Un **champ `teacherId` absent** est traité comme `null`.
-- Le **domaine** doit être une chaîne non vide ; le sujet n'en fixe pas la liste.
-
-## Structure
-
-```
-i3-flux/
-├── pipeline.js          point d'entrée CLI
-├── src/normalize.js     validation + normalisation d'une ligne (fonction pure)
-├── src/pipeline.js      lecture en flux, déduplication, écriture, statistiques
-├── tests/pipeline.test.js
-├── data/seances.ndjson  jeu de données du sujet
-└── preuves/             trace des tests, trace d'exécution, sorties sur le jeu du sujet
-```
+- `pipeline.js` : point d'entrée ;
+- `src/normalize.js` : vérification d'une ligne ;
+- `src/pipeline.js` : lecture, doublons, écriture ;
+- `tests/` : les tests ;
+- `data/seances.ndjson` : le fichier du sujet ;
+- `preuves/` : les résultats obtenus.

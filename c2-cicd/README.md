@@ -1,28 +1,24 @@
 # C2 — CI/CD
 
-Module indépendant : chaîne CI/CD reproductible pour un front React + Vite
-(installation verrouillée, tests bloquants, artefacts versionnés, rollback).
+Une chaîne automatique pour livrer le front React : installation, tests, construction, livraison et retour en arrière.
 
-| Livrable | Fichier |
+| Fichier | Contenu |
 |---|---|
-| Workflow GitHub Actions commenté | [`.github/workflows/front-ci-cd.yml`](.github/workflows/front-ci-cd.yml) |
-| Note (audit, choix, rollback, limites) | [`note-cicd.md`](note-cicd.md) |
-| Traces succès / échec / rollback | [`preuves/`](preuves/) |
-| Rejeu local des étapes du workflow | [`simulation/simuler-pipeline.sh`](simulation/simuler-pipeline.sh) |
+| [`.github/workflows/front-ci-cd.yml`](.github/workflows/front-ci-cd.yml) | le workflow GitHub Actions, commenté |
+| [`note-cicd.md`](note-cicd.md) | la note explicative |
+| `preuves/` | les traces de succès, d'échec et de retour arrière |
+| `simulation/simuler-pipeline.sh` | rejoue les étapes du workflow en local |
 
-Le workflow est rangé dans `c2-cicd/.github/workflows/`, et non à la racine du dépôt :
-GitHub ne l'exécute donc pas, ce qui respecte le « pas de déploiement GitHub réel » du sujet.
+Le workflow est rangé dans ce dossier, pas à la racine du dépôt. GitHub ne l'exécute donc pas, ce qui respecte la consigne « pas de déploiement réel ».
 
 ## Rejouer les traces
 
-Prérequis : Git Bash (ou bash Linux/macOS), Node 22.12+, npm. Aucun compte AWS ni GitHub.
+Il faut bash, Node 22.12+ et npm. Aucun compte n'est nécessaire.
 
 ```bash
 cd c2-cicd
 ./simulation/simuler-pipeline.sh livrer v1.0.0     # succès
 ./simulation/simuler-pipeline.sh livrer v1.1.0     # succès
-./simulation/simuler-pipeline.sh echec v1.2.0      # test rouge -> code 1, rien livré
-./simulation/simuler-pipeline.sh rollback v1.0.0   # retour à l'artefact précédent
+./simulation/simuler-pipeline.sh echec v1.2.0      # un test échoue : rien n'est livré
+./simulation/simuler-pipeline.sh rollback v1.0.0   # retour à la version précédente
 ```
-
-La cible simulée (`simulation/.cible/`) n'est pas versionnée ; la supprimer pour repartir de zéro.

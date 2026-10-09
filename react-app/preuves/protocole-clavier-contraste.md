@@ -1,40 +1,31 @@
-# F3 — Protocole de navigation clavier et mesure de contraste
+# F3 — Navigation au clavier et contrastes
 
-## 1. Navigation clavier
+## 1. Navigation au clavier
 
-### Protocole (à refaire à la main sur `npm run dev`, sans souris)
+À refaire sur `npm run dev`, sans utiliser la souris :
 
-| # | Action | Attendu | Vérifié par |
-|---|---|---|---|
-| 1 | Charger la page, `Tab` | focus sur le select **Groupe** (anneau violet visible) | test *le filtre groupe a un nom accessible…* |
-| 2 | `Flèche bas` sur le select | le groupe change sans recharger la page ; le compteur « N séances affichées » est annoncé (`role="status"`) | à la main |
-| 3 | `Tab`, `Tab` | **Domaine**, puis **Rechercher une séance** | à la main |
-| 4 | `Tab` | titre de la première carte (vrai `<button>`) ; l'anneau entoure toute la carte | test *ouvre le détail au clavier…* |
-| 5 | `Entrée` (ou `Espace`) | ouverture du détail, focus sur **Fermer le détail de la séance** | test + `trace-navigateur.txt` |
-| 6 | `Tab` répété | le focus tourne dans la modale (×, action), sans jamais repartir sur la page derrière | test (piège à focus) |
-| 7 | `Entrée` sur **Confirmer la séance** | le badge du détail **et** celui de la carte passent à « Confirmée » ; le focus reste dans la modale | test *une modification de statut reste cohérente…* |
-| 8 | `Échap` | fermeture, focus rendu à la carte d'origine | test + `trace-navigateur.txt` |
-| 9 | Séance « Travail autonome » (AUTO) | bouton **Confirmer** désactivé ; la raison est lue par le lecteur d'écran (`aria-describedby`) | test *une séance sans formateur (AUTO)…* |
-| 10 | `?scenario=erreur` | bouton **Réessayer** atteignable au `Tab`, annonce `role="alert"` | test *affiche une erreur avec un bouton "Réessayer"…* |
+| Étape | Action | Résultat attendu |
+|---|---|---|
+| 1 | `Tab` | le focus va sur le filtre **Groupe** |
+| 2 | `Flèche bas` | le groupe change, la liste se met à jour |
+| 3 | `Tab`, `Tab` | **Domaine**, puis **Rechercher** |
+| 4 | `Tab` | la première carte est entourée |
+| 5 | `Entrée` | le détail s'ouvre, le focus est sur **Fermer** |
+| 6 | `Tab` plusieurs fois | le focus reste dans la fenêtre de détail |
+| 7 | `Entrée` sur **Confirmer** | le statut change dans le détail et sur la carte |
+| 8 | `Échap` | le détail se ferme, le focus revient sur la carte |
+| 9 | ouvrir « Travail autonome » | **Confirmer** est désactivé, avec une explication |
+| 10 | `?scenario=erreur` | le bouton **Réessayer** est accessible au clavier |
 
-### Noms accessibles
+Les étapes 1, 4, 5, 6, 7, 8, 9 et 10 sont aussi vérifiées automatiquement par les tests.
 
-- **Champs de filtre** : `<label htmlFor>` donne « Groupe », « Domaine », « Rechercher une séance ». Le placeholder n'est pas le seul libellé.
-- **Carte** : le bouton porte uniquement le titre de la séance (« React composants »), pas tout le contenu de la carte.
-- **Modale** : `role="dialog"`, `aria-modal="true"`, nommée par son titre (`aria-labelledby`).
-- **Bouton ×** : `aria-label="Fermer le détail de la séance"` ; l'icône SVG est `aria-hidden`.
-- **Badges domaine** : un texte caché « Domaine : » donne son sens à « Web » hors contexte.
+**Noms accessibles** : chaque filtre a un vrai `<label>` ; le bouton × s'appelle « Fermer le détail de la séance » ; la fenêtre de détail porte le titre de la séance.
 
-## 2. Mesure de contraste (WCAG 2.1 AA)
+## 2. Contrastes (norme WCAG AA)
 
-Commande : **`npm run contrast`** (`scripts/contrast.mjs`). Le script :
-1. lit les couleurs dans `node_modules/tailwindcss/theme.css` (Tailwind v4 les définit en `oklch`) ;
-2. les convertit en sRGB ;
-3. applique la formule de luminance relative WCAG.
+Commande : `npm run contrast`. Le script lit les vraies couleurs de Tailwind v4 et calcule les ratios.
 
-Seuils : **4,5:1** pour le texte, **3:1** pour les composants d'interface (bordures de champs, icônes, anneau de focus — critère 1.4.11).
-
-Résultat de la commande :
+Seuils : **4,5** pour le texte, **3** pour les éléments d'interface (bordures, icônes).
 
 | Élément | Couleurs Tailwind | Hex (sRGB) | Ratio | Seuil AA | Résultat |
 |---|---|---|---|---|---|
@@ -60,27 +51,12 @@ Résultat de la commande :
 
 19/19 combinaisons conformes AA.
 
-> **Corrections apportées grâce à la mesure.**
-> - La première version utilisait `border-gray-300` pour les champs (1,47:1, non conforme au critère 1.4.11) et `text-gray-400` pour l'icône × (sous 3:1). Les champs passent en `border-gray-500` (4,84:1) et l'icône en `text-gray-600` (7,56:1).
-> - Le premier tableau de ce fichier reprenait par erreur les couleurs de Tailwind v3. Les valeurs ci-dessus sont celles de la v4, réellement utilisée.
->
-> **Limite.** violet-600 (`oklch(54.1% 0.281 293)`) dépasse légèrement le gamut sRGB. Le script écrête les valeurs, comme un écran sRGB, ce qui donne `#7f22fe`, la valeur hexadécimale publiée par Tailwind. Sur un écran P3, le violet est un peu plus saturé, ce qui ne réduit pas le contraste avec le blanc.
+**Corrections faites grâce à cette mesure** : la bordure des champs (ratio de 1,47) et la croix de fermeture étaient trop claires, elles ont été foncées. Mon premier tableau utilisait les couleurs de Tailwind v3 par erreur.
 
-## 3. Le statut ne dépend jamais de la seule couleur
+## 3. Statut compréhensible sans la couleur
 
-`StatusBadge.jsx` combine :
-- une **icône** : coche pour « Confirmée », horloge pour « Proposée » ;
-- un **texte** ;
-- un **fond différent** : plein violet, ou gris bordé.
+Chaque badge de statut a une icône (coche ou horloge) et un texte (« Confirmée » ou « Proposée »). On le comprend même en noir et blanc.
 
-En niveaux de gris, ou pour une personne daltonienne, le texte suffit à lui seul. Même principe pour les domaines (`DomainBadge.jsx`) : la couleur n'est qu'un repère, le libellé porte l'information.
+## 4. Pas de débordement
 
-## 4. Débordements à 360 px et 1280 px
-
-Mesure dans Chrome (`npm run captures`, voir `trace-navigateur.txt`) : `document.documentElement.scrollWidth - window.innerWidth = 0px` aux deux largeurs.
-
-À 360 px :
-- les filtres s'empilent ;
-- les cartes passent sur une colonne ;
-- les titres longs passent à la ligne (`break-words`) ;
-- la modale s'ouvre en panneau bas pleine largeur, avec défilement interne si besoin.
+Mesuré dans Chrome (`trace-navigateur.txt`) : **0 px** de défilement horizontal, à 360 px comme à 1280 px.

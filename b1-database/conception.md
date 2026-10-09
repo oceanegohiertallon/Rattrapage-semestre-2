@@ -1,78 +1,62 @@
-# B1 — Conception de la base MATRiCE
+# B1 — Conception de la base
 
-SGBD retenu : **PostgreSQL 17**. Schéma : [`sql/01-schema.sql`](sql/01-schema.sql) ·
-opérations : [`sql/03-operations.sql`](sql/03-operations.sql) · preuves : [`preuves/`](preuves/).
+Base choisie : **PostgreSQL 17**.
 
-## 1. Modèle
+## 1. Les tables
 
 ```mermaid
 erDiagram
-  FORMATEURS ||--o{ SEANCES : "anime (0..1 formateur par séance)"
-  SEMAINES   ||--|{ SEANCES : "contient"
-  SEANCES    ||--o{ ACQUIS  : "évalue"
-
-  FORMATEURS { text id PK "t1, t2…"  text nom }
-  SEMAINES   { date debut PK "toujours un lundi"  text libelle }
-  SEANCES {
-    text id PK
-    date date
-    text periode "am | pm"
-    text groupe "A | B | Promotion"
-    text mode "DG | CE | AUTO"
-    text titre
-    text domaine
-    text formateur_id FK "NULL = non affectée"
-    text statut "proposed | confirmed"
-    int  duree_minutes "210 par défaut"
-    date semaine_debut FK "calculée depuis date"
-  }
-  ACQUIS { bigint id PK  text seance_id FK  text libelle  bool valide  timestamptz valide_le }
+  FORMATEURS ||--o{ SEANCES : anime
+  SEMAINES   ||--|{ SEANCES : contient
+  SEANCES    ||--o{ ACQUIS  : evalue
 ```
+
+- **formateurs** : `id` (t1, t2…), `nom`.
+- **semaines** : `debut` (le lundi de la semaine), `libelle`.
+- **seances** : `id`, `date`, `periode`, `groupe`, `mode`, `titre`, `domaine`, `formateur_id`, `statut`, `duree_minutes`, `semaine_debut`.
+- **acquis** : `id`, `seance_id`, `libelle`, `valide`, `valide_le`.
 
 ### Clés
 
-| Table | Clé primaire | Pourquoi |
+| Table | Clé | Pourquoi |
 |---|---|---|
-| `formateurs` | `id` (`t1`…) | identifiant déjà utilisé par le sujet et par les autres modules ; format imposé (`^t[0-9]+$`) |
-| `semaines` | `debut` (le lundi) | clé naturelle stable et lisible ; une contrainte impose que ce soit un lundi |
-| `seances` | `id` (`s01`…) | identifiant métier du sujet, déjà partagé avec le front (F1) et le flux (I3) |
-| `acquis` | `id` auto (identité) | pas d'identifiant métier ; l'unicité métier est portée par `UNIQUE (seance_id, libelle)` |
+| formateurs | `id` | c'est l'identifiant du sujet (t1, t2, t3) |
+| semaines | `debut` | une semaine = son lundi, c'est simple et lisible |
+| seances | `id` | c'est l'identifiant du sujet (s01…) |
+| acquis | numéro automatique | il n'y a pas d'identifiant naturel |
 
-**Clés étrangères :**
-- `seances.formateur_id` vers `formateurs.id`. Elle peut être nulle : une séance proposée peut ne pas encore avoir de formateur, et une séance AUTO n'en a jamais.
-- `seances.semaine_debut` vers `semaines.debut`. Cette colonne est **générée** à partir de la date (le lundi de la date). Il est donc impossible de rattacher une séance à une semaine qui ne la contient pas.
-- `acquis.seance_id` vers `seances.id`, avec `ON DELETE CASCADE` : un acquis n'a pas de sens sans sa séance.
+**Liens entre tables (clés étrangères)**
+- une séance pointe vers son formateur (ou vers rien si elle n'en a pas encore) ;
+- une séance pointe vers sa semaine. La semaine est **calculée automatiquement à partir de la date**, ce qui évite les erreurs ;
+- un acquis pointe vers sa séance. Si la séance est supprimée, ses acquis le sont aussi.
 
 ### Cardinalités
 
-- Un formateur anime **0 à N** séances, et une séance a **0 ou 1** formateur.
-- Une semaine contient **1 à N** séances (on ne crée une semaine que lorsqu'elle porte une séance), et une séance appartient à **exactement 1** semaine.
-- Une séance a **0 à N** acquis, et un acquis appartient à **exactement 1** séance.
-- **Contrainte de créneau** : sur un créneau (date + période), un formateur a **au plus 1** séance. C'est l'index unique décrit au § 2.
+- Un formateur a **0 ou plusieurs** séances. Une séance a **0 ou 1** formateur.
+- Une semaine a **1 ou plusieurs** séances. Une séance est dans **1 seule** semaine.
+- Une séance a **0 ou plusieurs** acquis. Un acquis est lié à **1 seule** séance.
+- Sur un même créneau (même date, même demi-journée), un formateur a **au plus 1** séance.
 
-### Valeurs autorisées (contraintes `CHECK`)
+### Valeurs autorisées
 
-| Colonne | Valeurs | Règle du sujet |
-|---|---|---|
-| `periode` | `am`, `pm` | demi-journées |
-| `groupe` | `A`, `B`, `Promotion` | |
-| `mode` | `DG`, `CE`, `AUTO` | |
-| `statut` | `proposed`, `confirmed` | |
-| `domaine` | `web`, `data`, `cyber`, `ia`, `design`, `projet` | domaines du planning de référence |
-| `titre`, `nom`, `libelle` | non vides (espaces seuls refusés) | |
-| `duree_minutes` | 30 à 300 (210 par défaut) | demi-journée de 3 h 30 |
-| `semaines.debut` | un lundi | |
-| *croisée* `auto_sans_formateur_et_proposee` | `mode = AUTO` ⇒ `formateur_id IS NULL` et `statut = proposed` | « AUTO impose teacherId nul et status proposed » |
-| *croisée* `confirmation_exige_formateur` | `statut = confirmed` ⇒ `formateur_id IS NOT NULL` | « une confirmation exige un formateur » |
-| *croisée* `date_de_validation_coherente` | `valide` ⇔ `valide_le` renseignée | |
+| Colonne | Valeurs |
+|---|---|
+| periode | `am`, `pm` |
+| groupe | `A`, `B`, `Promotion` |
+| mode | `DG`, `CE`, `AUTO` |
+| statut | `proposed`, `confirmed` |
+| domaine | `web`, `data`, `cyber`, `ia`, `design`, `projet` |
+| titre, nom | ne peut pas être vide |
+| semaines.debut | doit être un lundi |
 
-J'ai préféré des `CHECK` à des types `ENUM`. Ils donnent un message qui nomme la règle violée, et on peut ajouter une valeur en remplaçant la contrainte dans la même migration. Avec un `ENUM`, il faudrait `ALTER TYPE … ADD VALUE`, et la nouvelle valeur n'est utilisable qu'une fois cette transaction validée.
+**Règles du sujet, vérifiées par la base**
+- une séance **AUTO** n'a pas de formateur et reste `proposed` ;
+- une séance **confirmée** doit avoir un formateur ;
+- un acquis validé doit avoir une date de validation.
 
-## 2. Garantie sous concurrence
+## 2. Un formateur, un seul créneau, même en cas d'écritures simultanées
 
-**Règle.** Un même formateur ne peut pas être affecté à deux séances différentes ayant la même date et la même période, même si deux écritures arrivent en même temps.
-
-**Mécanisme.** Un **index unique partiel** :
+La règle est garantie par un **index unique** :
 
 ```sql
 CREATE UNIQUE INDEX ux_seances_formateur_creneau
@@ -80,91 +64,59 @@ CREATE UNIQUE INDEX ux_seances_formateur_creneau
   WHERE formateur_id IS NOT NULL;
 ```
 
-**Pourquoi ça tient sous concurrence.** Quand une transaction écrit une clé `(t1, 2026-10-21, am)` dans l'index sans avoir encore validé, une seconde transaction qui veut écrire la même clé **attend** l'issue de la première :
-- si la première valide (`COMMIT`), la seconde échoue avec `23505 unique_violation` ;
-- si la première annule (`ROLLBACK`), la seconde passe.
+**Comment ça marche.** Si deux personnes essaient en même temps d'affecter le même formateur au même créneau, PostgreSQL fait **attendre** la deuxième jusqu'à ce que la première ait fini. Ensuite, la deuxième est **refusée**. C'est la base elle-même qui vérifie et écrit en une seule fois : aucune fenêtre ne permet aux deux de passer.
 
-Cela vaut quel que soit le niveau d'isolation, y compris le niveau par défaut (`READ COMMITTED`). La vérification et l'écriture forment une seule opération atomique, faite par le moteur.
+**Pourquoi pas une vérification dans le code.** Si le code fait « je vérifie que le formateur est libre, puis j'écris », deux requêtes simultanées peuvent vérifier en même temps, trouver toutes les deux le formateur libre, et écrire toutes les deux. Le test le montre (partie 3).
 
-**Pourquoi pas une vérification dans l'application.** Le schéma « je compte les séances du créneau, puis j'écris si j'en trouve 0 » échoue sous concurrence : les deux transactions lisent 0 avant que l'une ou l'autre n'ait écrit. La partie 3 du test le reproduit : sans l'index, **t1 se retrouve affecté deux fois** au même créneau.
+**Autres solutions écartées**
+- `SELECT … FOR UPDATE` : ne protège pas quand on crée une nouvelle séance ;
+- le niveau d'isolation `SERIALIZABLE` : oblige à relancer les transactions refusées, et il suffit d'en oublier une ;
+- un verrou dans le code : ne protège que le code qui pense à l'utiliser.
 
-**Alternatives écartées**
+**Preuves** (`preuves/test-concurrence.txt`, avec de vraies connexions en parallèle)
+- 2 sessions sur le même créneau : la 2ᵉ attend environ 2 secondes, puis elle est refusée ;
+- 3 sessions lancées en même temps : 1 seule réussit ;
+- sans l'index : le formateur est affecté 2 fois (c'est ce qu'il faut éviter).
 
-| Option | Raison |
-|---|---|
-| `SELECT … FOR UPDATE` avant d'écrire | ne verrouille que des lignes existantes : deux insertions de **nouvelles** séances sur le même créneau ne se bloquent pas |
-| Isolation `SERIALIZABLE` | fonctionne, mais oblige l'application à rejouer les transactions en échec de sérialisation (`40001`), et toute transaction oubliée sans ce niveau contourne la règle |
-| Verrou applicatif (`pg_advisory_xact_lock`) | ne protège que le code qui pense à le prendre |
-| Contrainte d'exclusion `EXCLUDE USING gist` | nécessaire pour des **intervalles** horaires qui se chevauchent ; ici les créneaux sont discrets (date + am/pm), un index unique suffit et il est plus simple |
-
-**Preuve** ([`preuves/test-concurrence.txt`](preuves/test-concurrence.txt), produite par `tests/test-concurrence.sh`, avec de vraies connexions séparées) :
-- **Partie 1** : la session 2 est **bloquée environ 2 s**, exactement le temps que la session 1 garde sa transaction ouverte. Elle échoue ensuite (`23505`). État final : `c01=t1/confirmed, c02=-/proposed`.
-- **Partie 2** : 3 sessions lancées simultanément sur 3 séances du même créneau : **1 succès et 2 refus**.
-- **Partie 3** : contre-exemple sans index, avec une double affectation.
-
-**Entrées invalides** ([`preuves/test-entrees-invalides.txt`](preuves/test-entrees-invalides.txt)) : 18 cas refusés, chacun avec le **code SQLSTATE attendu** vérifié (23514, 23503, 23505, 22008, P0002), et 5 cas valides acceptés. Tout se fait dans une transaction annulée.
+**Entrées invalides** (`preuves/test-entrees-invalides.txt`) : 18 cas refusés (mauvaise période, AUTO avec formateur, date inexistante, formateur inconnu…) et 5 cas valides acceptés.
 
 ## 3. Index
 
-| Index | Colonnes | Sert à |
+| Index | Sur | Sert à |
 |---|---|---|
-| `seances_pkey` | `id` | confirmer une affectation (UPDATE par id), jointure avec les acquis |
-| `ux_seances_formateur_creneau` (unique, partiel) | `formateur_id, date, periode` où `formateur_id` n'est pas nul | **la règle de créneau** ; et, en bonus, « les séances d'un formateur sur une période » (plan 6) |
-| `ix_seances_semaine` | `semaine_debut, date, periode, groupe` | lister une semaine (plans 1, 2 et 5) |
-| `acquis_unique_par_seance` | `seance_id, libelle` | unicité d'un acquis dans sa séance ; sert aussi l'index de la FK (suppression en cascade) |
-| `ix_acquis_valides` (partiel) | `seance_id` INCLUDE `libelle, valide_le` où `valide` | acquis validés : il ne contient que les lignes validées, et l'`INCLUDE` permet un *index-only scan* (plan 5) |
+| clé primaire des séances | `id` | retrouver une séance pour la confirmer |
+| `ux_seances_formateur_creneau` | formateur, date, période | **la règle du créneau**, et retrouver les séances d'un formateur |
+| `ix_seances_semaine` | semaine, date, période, groupe | afficher le planning d'une semaine |
+| `acquis_unique_par_seance` | séance, libellé | éviter deux fois le même acquis dans une séance |
+| `ix_acquis_valides` | séance (acquis validés seulement) | trouver vite les acquis validés |
 
-**Volontairement absents.**
-- Pas d'index sur `statut`. Avec seulement 2 valeurs, il est trop peu sélectif pour qu'on l'utilise.
-- Pas d'index sur `date` seule. Le calcul des heures (plan 4) lit 130 pages en environ 1 ms ; un index ralentirait chaque écriture pour un gain nul à ce volume (§ 5).
+Pas d'index sur le statut : il n'a que 2 valeurs, donc l'index ne serait pas utilisé.
 
 ## 4. Relationnel ou documentaire ?
 
-| Critère | PostgreSQL (retenu) | MongoDB |
+| | PostgreSQL (relationnel) | MongoDB (documentaire) |
 |---|---|---|
-| Règle formateur/créneau sous concurrence | **index unique partiel**, natif et atomique | index unique partiel possible aussi (`partialFilterExpression`), mais seulement si la séance est un document à part entière. Si les séances sont imbriquées dans la semaine, l'unicité *entre* documents devient impossible |
-| Règles croisées (AUTO, confirmation) | `CHECK` dans le schéma, refus à l'écriture | `$jsonSchema` + `$expr` : possible, moins lisible, et pas appliqué aux documents déjà présents |
-| Références (formateur, semaine) | clés étrangères vérifiées | aucune clé étrangère : formateur inconnu ou semaine absente acceptés |
-| Requêtes transverses (heures par formateur, acquis validés) | jointures + `GROUP BY` | pipeline `$lookup`/`$group`, ou dénormaliser le nom du formateur (à resynchroniser) |
-| Lecture « une semaine complète » | jointure, environ 0,1 ms (plan 1) | **un seul document** si la semaine embarque ses séances : c'est le point fort du documentaire |
-| Schéma évolutif (champs libres par séance) | colonnes ou `jsonb` | naturel |
+| Règle du créneau | index unique, simple et sûr | possible seulement si chaque séance est un document à part |
+| Règles du sujet (AUTO, confirmation) | vérifiées par la base | possibles, mais moins lisibles |
+| Liens (formateur, semaine) | vérifiés par la base | pas vérifiés : un formateur inconnu serait accepté |
+| Calculs (heures par formateur) | jointure + `GROUP BY` | plus compliqué |
+| Lire une semaine entière | une jointure | un seul document si la semaine contient ses séances (le point fort de MongoDB) |
 
-**Conclusion.** Les données sont fortement **reliées** (formateur, semaine, séance, acquis) et la règle principale est une **contrainte d'unicité entre entités**. Le relationnel la garantit nativement. En documentaire, il faudrait soit renoncer à imbriquer les séances, et perdre l'avantage du modèle, soit reporter la règle dans l'application, ce que la partie 3 du test montre fragile. Le besoin de souplesse (champs pédagogiques variables) reste couvert en PostgreSQL par une colonne `jsonb` si besoin.
+**Conclusion** : les données sont très liées entre elles, et la règle principale compare plusieurs séances. Le relationnel est plus adapté.
 
-## 5. Plans d'exécution commentés
+## 5. Plans d'exécution
 
-Fichier complet : [`preuves/plans-execution.txt`](preuves/plans-execution.txt).
+Mesurés sur **10 006 séances** et 30 007 acquis (`preuves/plans-execution.txt`).
 
-**Conditions de mesure**
-- 10 006 séances, 50 formateurs, 335 semaines, 30 007 acquis, générés par `sql/04-volume.sql` de façon déterministe ;
-- `VACUUM ANALYZE` lancé avant les mesures ;
-- PostgreSQL 17.6 ;
-- toutes les pages en cache (`shared hit`). Les temps donnent des ordres de grandeur sur une machine de développement.
-
-1. **Planning d'une semaine.**
-   - `Index Scan using ix_seances_semaine` avec `Index Cond: semaine_debut = '2024-03-04'` : **30 lignes lues sur 10 006, 4 pages**. Sans cet index, ce serait un parcours complet de 130 pages.
-   - Les formateurs (50 lignes) sont chargés dans une table de hachage (`Hash Left Join`). Ce type de jointure perd l'ordre de l'index, d'où un `Sort` final : un tri rapide de 30 lignes en 27 kB de mémoire, négligeable.
-   - Total : environ 0,1 ms.
-2. **Formateurs d'une semaine.** Le même index alimente un `HashAggregate` (27 formateurs). Le comptage des confirmées utilise un `FILTER` dans le même passage, sans deuxième lecture.
-3. **Confirmer une affectation.**
-   - `Index Scan using seances_pkey` : 1 ligne, 3 pages.
-   - L'`UPDATE` modifie `formateur_id`, une colonne indexée. PostgreSQL ne peut donc pas faire de mise à jour « HOT » : il met à jour chaque index, et c'est là que **l'unicité du créneau est vérifiée**.
-   - La ligne `Trigger for constraint seances_formateur_id_fkey` montre la vérification de la clé étrangère (le formateur existe).
-4. **Heures par formateur sur un trimestre.**
-   - `Seq Scan on seances` : 9 772 lignes écartées pour 234 gardées, **130 pages, environ 1,4 ms**.
-   - Le planificateur estime à juste titre que lire toute la table (petite et en cache) coûte moins cher que de suivre un index pour 2 % des lignes, dispersées.
-   - `Hash Right Join` : la table des formateurs (50 lignes) sert de table de hachage, et la jointure externe garde les formateurs sans séance (0 h).
-   - **À surveiller** : au-delà de quelques centaines de milliers de séances, un index `(statut, date) INCLUDE (formateur_id, duree_minutes)` permettrait un *index-only scan*. Il ne se justifie pas aujourd'hui.
-5. **Acquis validés d'une semaine.**
-   - `Nested Loop` : pour chacune des 30 séances de la semaine (trouvées par `ix_seances_semaine`), un `Index Only Scan using ix_acquis_valides`, avec **`Heap Fetches: 0`** : toutes les colonnes utiles sont dans l'index partiel, et la table `acquis` n'est jamais lue.
-   - `Incremental Sort` : les lignes arrivent déjà triées par date et période (ordre de l'index), PostgreSQL ne trie que le reste (id, libellé).
-   - Environ 0,15 ms.
-6. **Créneaux d'un formateur.**
-   - `Bitmap Index Scan on ux_seances_formateur_creneau` : l'index créé pour la règle d'unicité sert aussi à la lecture, puisque `formateur_id` vient en tête et la date en second. 8 lignes, 7 pages.
+1. **Planning d'une semaine** : PostgreSQL utilise l'index `ix_seances_semaine`. Il lit **30 lignes sur 10 006**, au lieu de toute la table. Environ 0,1 ms.
+2. **Formateurs d'une semaine** : même index, puis un regroupement par formateur.
+3. **Confirmer une affectation** : la séance est retrouvée par son `id` (1 ligne). C'est au moment de l'écriture que l'index unique vérifie le créneau.
+4. **Heures par formateur sur 3 mois** : PostgreSQL lit **toute la table** (130 pages, environ 1,4 ms). C'est normal : la table est petite, et la lire en entier coûte moins cher que d'utiliser un index. Avec beaucoup plus de séances, il faudrait ajouter un index sur la date.
+5. **Acquis validés d'une semaine** : PostgreSQL trouve les 30 séances de la semaine, puis leurs acquis validés **directement dans l'index**, sans lire la table des acquis (`Heap Fetches: 0`).
+6. **Séances d'un formateur** : l'index de la règle du créneau sert aussi ici, car il commence par le formateur.
 
 ## 6. Limites
 
-- La contrainte porte sur le **formateur**. Elle n'empêche pas un **groupe** d'avoir deux séances sur un même créneau, ni une séance « Promotion » de chevaucher une séance du groupe A. C'est une règle possible, mais absente du sujet. Pour la traiter, il faudrait un index unique `(groupe, date, periode)` et une contrainte d'exclusion pour le cas Promotion contre A/B.
-- La durée d'une séance est fixée à 210 minutes par défaut. Les heures dépendent donc de cette convention tant que les vraies durées ne sont pas saisies.
-- Pas de gestion des droits SQL (rôles applicatifs distincts du propriétaire du schéma). En production, l'API se connecterait avec un rôle qui ne peut que lire et écrire les tables, sans pouvoir modifier le schéma.
-- Les preuves ont été produites avec PostgreSQL 17.6 en local (binaires officiels), et non avec le conteneur `docker-compose.yml`. Les scripts sont les mêmes ; seule la connexion (variables `PG*`) change.
+- Rien n'empêche un même **groupe** d'avoir deux séances en même temps (ce n'était pas demandé).
+- La durée d'une séance est fixée à 3 h 30 par défaut.
+- Les preuves ont été faites avec PostgreSQL 17.6 installé en local, pas avec Docker. Les scripts sont les mêmes.
